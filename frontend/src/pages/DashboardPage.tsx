@@ -1,4 +1,5 @@
-import {riskIndex} from '../components/common/assessmentSemantics';
+import {AssessmentLabels} from '../components/common/AssessmentDimensions';
+import {concernIndex as riskIndex} from '../components/common/assessmentSemantics';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -56,7 +57,7 @@ export const DashboardPage: React.FC = () => {
     );
   }
 
-  const { stats, charts, recent_scans } = data;
+  const {recent_scans}=data;const stats=data.investigation_stats||data.stats;const charts={...data.charts,risk_distribution:data.investigation_risk_distribution||data.charts.risk_distribution};
 
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto space-y-8">
@@ -69,7 +70,7 @@ export const DashboardPage: React.FC = () => {
             <span>STORED INVESTIGATION OVERVIEW</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Trust & Safety Intelligence Dashboard</h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-1">
+          <p className="text-xs sm:text-sm text-slate-300 mt-1" title={data.investigation_basis}>
             Stored scan assessments and community report counts. Reports and automated concerns do not establish confirmed incidents.
           </p>
         </div>
@@ -87,12 +88,12 @@ export const DashboardPage: React.FC = () => {
         
         <div className="p-4 rounded-2xl glass-card border border-cyber-border">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono uppercase text-slate-400 font-bold">Total Checked</span>
+            <span className="text-[11px] font-mono uppercase text-slate-400 font-bold">Investigations</span>
             <Search className="w-4 h-4 text-cyber-cyan" />
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-white">{stats.opportunities_checked}</p>
           <p className="text-[11px] text-emerald-400 mt-1 flex items-center space-x-1 font-mono">
-            <span>Includes case-source and demo scans</span>
+            <span>One case or standalone scan each</span>
           </p>
         </div>
 
@@ -168,7 +169,7 @@ export const DashboardPage: React.FC = () => {
             {/* Center Stat Overlay */}
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
               <span className="text-3xl font-black font-mono text-white tracking-tight">{stats.opportunities_checked}</span>
-              <span className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">TOTAL SCANS</span>
+              <span className="text-[10px] font-mono uppercase text-slate-400 tracking-wider">INVESTIGATIONS</span>
             </div>
           </div>
 
@@ -212,8 +213,8 @@ export const DashboardPage: React.FC = () => {
 
       {/* Historical Scans Trend Line */}
       <div className="p-6 rounded-3xl glass-card border border-cyber-border">
-        <h3 className="font-extrabold text-white text-base mb-1">Weekly Verification Volume & Threat Activity</h3>
-        <p className="text-xs text-slate-400 mb-4">Total submissions scanned vs high/critical threats flagged</p>
+        <h3 className="font-extrabold text-white text-base mb-1">Weekly source scan activity</h3>
+        <p className="text-xs text-slate-400 mb-4">Source scan records and elevated-concern rule outputs. Several scans may belong to one case.</p>
         <div className="h-56">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={charts.scans_over_time} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
@@ -231,7 +232,7 @@ export const DashboardPage: React.FC = () => {
               <YAxis stroke="#64748b" fontSize={11} />
               <Tooltip contentStyle={{ backgroundColor: '#0d1527', borderColor: '#1f2d4d', borderRadius: '12px', fontSize: '12px' }} />
               <Area type="monotone" dataKey="scans" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#scansGrad)" name="Total Scans" />
-              <Area type="monotone" dataKey="threats" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#threatsGrad)" name="Threats Flagged" />
+              <Area type="monotone" dataKey="threats" stroke="#ef4444" strokeWidth={2} fillOpacity={1} fill="url(#threatsGrad)" name="Elevated-concern scans" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -241,8 +242,8 @@ export const DashboardPage: React.FC = () => {
       <div className="p-6 rounded-3xl glass-card border border-cyber-border">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="font-extrabold text-white text-base">Recent Opportunity Investigations</h3>
-            <p className="text-xs text-slate-400">Latest submissions inspected by forensic scanners</p>
+            <h3 className="font-extrabold text-white text-base">Recent source and standalone scans</h3>
+            <p className="text-xs text-slate-400">Source-level scan records; several may belong to one unified case. The investigation total above counts that case once.</p>
           </div>
           <Link to="/history" className="text-xs font-bold text-cyber-cyan hover:underline flex items-center space-x-1">
             <span>View All Scans</span>
@@ -270,7 +271,7 @@ export const DashboardPage: React.FC = () => {
               </div>
               <div className="flex items-center space-x-3 flex-shrink-0">
                 <span className="font-mono text-sm font-bold text-slate-200">{riskIndex(sc.trust_score,sc.risk_level)}</span>
-                <RiskBadge level={sc.risk_level} size="sm" />
+                <RiskBadge level={sc.risk_level} size="sm" /><AssessmentLabels assessment={sc.assessment}/>
               </div>
             </Link>
           ))}

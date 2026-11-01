@@ -56,6 +56,10 @@ def compare_claims(case_id,claims,sources):
                 elif kind in {'certificate_association','placement_promise'}:
                     classification='CONTEXT_DEPENDENT' if kind=='placement_promise' and av.get('scope')!=bv.get('scope') else 'POSSIBLE_INCONSISTENCY'
                     description='Submitted '+kind.replace('_',' ')+' wording differs; issuer, guarantee scope and conditions require clarification. Different promise scopes are not automatically contradictory.'
+                elif kind=='interview_process':
+                    if av['required']==bv['required']:continue
+                    classification='CONFIRMED_CONTRADICTION' if av.get('condition')==bv.get('condition') else 'POSSIBLE_INCONSISTENCY'
+                    description='Submitted selection instructions disagree about whether an interview is required. This is a cited disagreement, not independent authentication.'
                 elif kind=='duration':
                     def duration(v):
                         return ('month',v['number']*(12 if v['unit']=='year' else 1)) if v['unit'] in {'month','year'} else ('day',v['number']*(7 if v['unit']=='week' else 1))

@@ -48,12 +48,20 @@ def fee_exempt(text,start,end):
     return bool(re.search(r'\b(?:exempt(?:ed|ion)?|waiv(?:ed|er))\b',before[-130:],re.I)
         or re.match(r'\s*(?:is|are|:)??\s*(?:waived|not required|none|zero|₹\s*0\b|(?:Rs\.?|INR)\s*0\b)',after,re.I))
 
+def scoped_fee_policy(local):
+    return bool(re.search(r'\b(?:General|GEN|EWS|OBC|SC|ST|PwBD|UR)\b[\s/,&A-Za-z()-]{0,60}\bfees?\b',local,re.I))
+
 def enrich_amounts(text,entities):
-    from app.scanners.payment_scanner import MONEY,PAYMENT_PURPOSE_REGEX
+    from app.scanners.payment_scanner import MONEY,PAYMENT_PURPOSE_REGEX,COMPENSATION,_category
     liability=re.compile(r'\b(?:service[\s–—-]+agreement|service[\s–—-]+bond|breach|contractual\s+penalt(?:y|ies)|liquidated\s+damages|bond\s+(?:amount|liability))\b',re.I)
     reimbursement=re.compile(r'\b(?:reimburse(?:ment|d)?|reimbursable|travel\s+(?:expenses?|allowance))\b',re.I)
     for e in entities:
         a,b=sentence_bounds(text,e['start'],e['end']);local=text[a:b]
+        if e['role']=='AMBIGUOUS' and re.match(r'\s*(?:plus|\+)\s*GST\b',text[e['end']:],re.I):
+            labels=list(COMPENSATION.finditer(text[max(a,e['start']-80):e['start']]))
+            if labels:
+                label=labels[-1];offset=max(a,e['start']-80);between=text[offset+label.end():e['start']]
+                if re.fullmatch(r'\s*(?:is|of|:)?\s*',between,re.I):e.update(role='COMPENSATION',category=_category(label.group(),'COMPENSATION'),label=label.group(),label_start=offset+label.start(),label_end=offset+label.end(),ambiguity_reason=None)
         # Generic fee/deposit wording inside an explicitly described application
         # flow is policy context; a labelled security/registration demand stays distinct.
         generic=e.get('label','') or ''
@@ -85,8 +93,25 @@ def enrich_amounts(text,entities):
             if re.search(r'\b(?:including|inclusive of|inclusive)\s+(?:all\s+)?GST\b',text[e['end']:min(b,e['end']+70)],re.I):e['amount_role']='TAX_INCLUSIVE_TOTAL'
             if re.search(r'\bfor\s+all\s+(?:candidates|applicants|categories)\b',local,re.I):e['applicability']='ALL'
         e.update(destination(text,e['start'],e['end']))
+    # A three-part equation must explicitly state GST, total and exact arithmetic.
+    # GST is a tax component, never a separate upfront applicant fee.
+    for base,tax,total in zip(entities,entities[1:],entities[2:]):
+        if any(x['role'] not in {'PAYMENT','AMBIGUOUS'} for x in [base,tax,total]):continue
+        between=text[base['end']:tax['start']];tail=text[tax['end']:total['start']]
+        a,b=sentence_bounds(text,base['start'],total['end']);local=text[a:b]
+        if len(local)>700 or '--- Page' in local or len({x['currency'] for x in [base,tax,total]})!=1:continue
+        if not re.search(r'\bGST\b',between,re.I) or not re.search(r'\btotal\b|=',tail,re.I):continue
+        if not re.search(r'\bfee',local,re.I) or Decimal(base['value'])+Decimal(tax['value'])!=Decimal(total['value']):continue
+        category='APPLICATION_FEE' if re.search(r'\b(?:application|exam(?:ination)?)\s+fee',local,re.I) else 'CATEGORY_FEE_POLICY' if scoped_fee_policy(local) else None
+        if not category:continue
+        relation=digest(base['currency']+':'+category+':'+base['value']+':'+total['value'])
+        refs=[span(text,base['start'],base['end'],'base_fee'),span(text,total['start'],total['end'],'tax_inclusive_total')]
+        for item,role in [(base,'BASE_FEE'),(total,'TAX_INCLUSIVE_TOTAL')]:
+            item.update(role='PAYMENT',category=category,amount_role=role,relation_group=relation,related_amount_spans=refs,tax_component_span=span(text,tax['start'],tax['end'],'tax_component'),classification_rationale='Explicit stated base + GST component = total; arithmetic matches. No tax rate or fee authorization inferred.')
+        tax.update(role='TAX',category='GST_COMPONENT',amount_role='TAX_COMPONENT',classification_rationale='Explicit GST component in the stated equation; not a separate fee demand.')
     # Only explicit tax equations/total statements establish a related base/total.
     for base,total in zip(entities,entities[1:]):
+        if any(x['role'] not in {'PAYMENT','AMBIGUOUS'} for x in [base,total]):continue
         between=text[base['end']:total['start']]
         if base['currency']!=total['currency'] or len(between)>180 or '--- Page' in between:continue
         if not re.search(r'\bGST\b',between,re.I) or not re.search(r'\+|\binclud|=|\btotal\b|\bi[.]?e[.]?\b|\bamounting\b',between,re.I):continue
@@ -121,7 +146,7 @@ def payment_findings(text,entities):
         current['source_spans']=list({(s['start'],s['end'],s.get('kind')):s for s in [*current['source_spans'],*flag['source_spans']]}.values())
         current['amounts']=list(dict.fromkeys([*current.get('amounts',[]),*flag.get('amounts',[])]))
     def flag_for(e):
-        context=destination(text,e['start'],e['end']);app=e['category']=='APPLICATION_FEE'
+        context=destination(text,e['start'],e['end']);app=e['category'] in {'APPLICATION_FEE','CATEGORY_FEE_POLICY'}
         uncertain=uncertain_payment_context(text,e.get('label_start') if e.get('label_start') is not None else e['start'])
         external=context['outside_application_flow'] or context['channel']=='GIFT_CARD_OR_CRYPTO'
         disclosed_training=e['category']=='TRAINING_FEE' and not coercive_training_context(text,e['start'],e['end'])
@@ -129,7 +154,8 @@ def payment_findings(text,entities):
         key='payment:'+e['category']+':'+e.get('relation_group',e['currency']+':'+e['value'])+':'+str(context['recipient'])+':'+str(context['channel'])
         spans=[span(text,e['start'],e['end'],'payment_amount'),span(text,e['support_start'],e['support_end'],'payment_context'),*e.get('related_amount_spans',[]),*context['destination_spans']]
         if e.get('label_start') is not None:spans.append(span(text,e['label_start'],e['label_end'],'payment_label'))
-        message=('Training fee disclosed; authorization remains unresolved: ' if disclosed_training and not external else 'Application fee policy observed; amount/payment authorization remain unresolved: ' if app and not external else 'Payment request identified ('+e['category'].lower().replace('_',' ')+'): ')+e['raw']+'.'
+        policy_name='Category-scoped fee policy' if e['category']=='CATEGORY_FEE_POLICY' else 'Application fee policy'
+        message=('Training fee disclosed; authorization remains unresolved: ' if disclosed_training and not external else policy_name+' observed; amount/payment authorization remain unresolved: ' if app and not external else 'Payment request identified ('+e['category'].lower().replace('_',' ')+'): ')+e['raw']+'.'
         return key,{'code':'APPLICATION_FEE_UNRESOLVED' if app and not external else 'OUTSIDE_FLOW_PAYMENT' if external else 'UPFRONT_PAYMENT_REQUEST',
             'severity':sev,'message':message,'detail':e['classification_rationale']+' Recipient and channel are submitted claims, not proof of authorization. Verify this exact advertisement, fee and destination independently.',
             'observed_value':e['raw'],'source_spans':spans,'amounts':[e['raw']],
@@ -143,7 +169,7 @@ def payment_findings(text,entities):
         if re.search(r'\b(?:breach|service[ -]agreement|contractual\s+penalty)\b',text[a:b],re.I):continue
         purposes.append(m)
         if any(e['support_start']<=m.start()<e['support_end'] for e in payments):continue
-        app=bool(re.search(r'\b(?:application|exam)\b',m.group(),re.I)) or (m.group().lower() in {'fee','fees','deposit'} and bool(re.search(r'\bapplication\b|payment\s+gateway',text[a:b],re.I)))
+        app=bool(re.search(r'\b(?:application|exam)\b',m.group(),re.I)) or (m.group().lower() in {'fee','fees','deposit'} and (scoped_fee_policy(text[a:b]) or bool(re.search(r'\bapplication\b|payment\s+gateway',text[a:b],re.I))))
         training=bool(re.search(r'\btraining\b',m.group(),re.I))
         category='APPLICATION_FEE' if app else 'TRAINING_FEE' if training else 'UNPRICED_'+re.sub(r'\W+','_',m.group().upper())
         ctx=destination(text,m.start(),m.end())
@@ -189,7 +215,7 @@ def payment_findings(text,entities):
         unique={}
         for raw in flag.get('amounts',[]):unique.setdefault(raw_values.get(raw,raw),raw)
         flag['amounts']=list(unique.values())
-        if len(flag['amounts'])>1:flag['message']='Application fee policy observed; related stated base/total amounts: '+', '.join(flag['amounts'])+'. Payment authorization remains unresolved.'
+        if len(flag['amounts'])>1:flag['message']=('Category-scoped fee policy' if flag.get('fact_key','').startswith('payment:CATEGORY_FEE_POLICY:') else 'Application fee policy')+' observed; related stated base/total amounts: '+', '.join(flag['amounts'])+'. Payment authorization remains unresolved.'
     return {'payment_detected':bool(groups),'flags':list(groups.values()),'monetary_entities':entities,'amounts_detected':entities,
         'payment_amounts':payments,'compensation_amounts':compensation,'detected_amounts':list(dict.fromkeys(e['value'] for e in payments)),
         'amounts_detected_legacy':entities,'purposes_found':list(dict.fromkeys(m.group() for m in purposes)),

@@ -14,7 +14,7 @@ router=APIRouter(prefix='/cases',tags=['Multi-source cases'])
 def list_cases(db:Session=Depends(get_db),actor=Depends(current_actor)):
     query=db.query(InvestigationCase)
     if actor and actor.role!='ADMIN':query=query.filter_by(user_id=actor.id)
-    return [{'id':c.id,'title':c.title,'status':c.status,'revision':c.revision,'fusion':c.assessment.get('fusion',{}),'assessment':assessment_for(c.assessment.get('fusion',{}),c.assessment.get('evidence',[]),c.assessment.get('claims',[])),
+    return [{'id':c.id,'title':c.title,'status':c.status,'revision':c.revision,'fusion':c.assessment.get('fusion',{}),'assessment':assessment_for(c.assessment.get('fusion',{}),c.assessment.get('evidence',[]),c.assessment.get('claims',[]),c.assessment),
         'source_count':len(c.assessment.get('sources',[])),'updated_at':c.updated_at.replace(tzinfo=timezone.utc)} for c in query.order_by(InvestigationCase.updated_at.desc()).limit(100)]
 
 @router.post('')
@@ -61,7 +61,7 @@ def remove_source(case_id:str,source_id:str,req:CaseMutation,db:Session=Depends(
 @router.get('/{case_id}/revisions')
 def revisions(case_id:str,db:Session=Depends(get_db),actor=Depends(current_actor)):
     service.owned_case(db,case_id,actor)
-    return [{'revision':r.revision,'event':r.event,'created_at':r.created_at.replace(tzinfo=timezone.utc),'fusion':r.snapshot['fusion'],'assessment':assessment_for(r.snapshot['fusion'],r.snapshot.get('evidence',[]),r.snapshot.get('claims',[]))} for r in db.query(CaseAssessmentRevision).filter_by(case_id=case_id).order_by(CaseAssessmentRevision.revision.desc()).limit(200)]
+    return [{'revision':r.revision,'event':r.event,'created_at':r.created_at.replace(tzinfo=timezone.utc),'fusion':r.snapshot['fusion'],'assessment':assessment_for(r.snapshot['fusion'],r.snapshot.get('evidence',[]),r.snapshot.get('claims',[]),r.snapshot)} for r in db.query(CaseAssessmentRevision).filter_by(case_id=case_id).order_by(CaseAssessmentRevision.revision.desc()).limit(200)]
 
 @router.get('/{case_id}/revisions/{revision}')
 def revision(case_id:str,revision:int,db:Session=Depends(get_db),actor=Depends(current_actor)):

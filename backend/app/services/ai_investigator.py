@@ -16,7 +16,16 @@ def answer_investigator_query(question,scan_detail):
         for e in items[:4]:cite(e)
         return '\n'.join('• '+e['evidence'] for e in items[:4])
     scope='Specific offer authenticity, recruiter authorization and the applicant’s payment destination remain unresolved unless separately supported in their exact scope. Company existence, domain ownership and offer authorization are different checks.'
-    if any(k in q for k in ['partner','collaborat','certificate','placement']):
+    if 'missing' in q:
+        missing=[c['name']+': '+c.get('reason','unresolved') for c in ctx['assessment'].get('coverage',{}).get('criteria',[]) if not c.get('completed')]
+        answer=identity+'\nMissing or unresolved evidence:\n'+'\n'.join('• '+x for x in (missing or ctx['unknowns'] or ['Independent confirmation of the organization, recruiter and exact offer is missing.'])[:8])
+    elif 'contradict' in q or 'conflict' in q:
+        conflicts=[f for f in ctx['comparisons'] if f['classification'] in {'CONFIRMED_CONTRADICTION','POSSIBLE_INCONSISTENCY'}]
+        answer=identity+'\n'+('\n'.join(f['description'] for f in conflicts[:5]) or 'No comparable source contradiction is recorded. Missing fields and new information are not contradictions.')
+        for f in conflicts[:5]:citations.extend(f['citations'])
+    elif 'low concern' in q or 'difference' in q and 'verified' in q:
+        answer=identity+'\nLow observed concern describes the inspected content: few or no suspicious signals were found. Verified claims require scoped independent evidence. A normal-looking description can remain unverified, and processing text is not authentication.'
+    elif any(k in q for k in ['partner','collaborat','certificate','placement']):
         selected=[c for c in ctx['claims'] if c['claim_type'] in {'claimed_collaborator','certificate_association','placement_promise'}]
         answer=identity+'\n'+'\n'.join('• Submitted '+c['claim_type'].replace('_',' ')+': '+claim_display(c['value']) for c in selected[:12])+'\nPartnerships and certificate associations have not been authenticated. Placement-assistance wording does not establish guaranteed job placement.'
         citations.extend({'source_id':c['source_id'],'source_title':'Submitted program claim','claim_id':c['id'],'excerpt':c['excerpt'],**c['location']} for c in selected)
@@ -25,7 +34,7 @@ def answer_investigator_query(question,scan_detail):
         answer=identity+'\n'+('\n'.join('• '+a['title']+': '+(a.get('unavailable_reason') or a['reason']) for a in actions) or 'Compare the exact notice, role, fee/exemptions and payment destination using independently obtained official contact details.')
     elif any(k in q for k in ['fee','payment','deposit','bond']):
         items=[e for e in ctx['evidence'] if any(k in e.get('category','') for k in ['payment','policy','fee'])]
-        answer=identity+'\n'+(findings(items) or 'No payment concern is recorded in this snapshot; missing information does not establish authorization.')+'\nAn ordinary application fee is not proof of fraud. A contractual liability is not an upfront demand. Compare category, stage, tax basis, recipient and channel before paying.'
+        answer=identity+'\n'+(findings(items) or 'No payment concern is recorded in this snapshot; missing information does not establish authorization.')+'\nTraining fees are not always fraudulent. A disclosed fee still requires checking the recipient, terms and authorization. An ordinary application fee is not proof of fraud. A contractual liability is not an upfront demand. Compare category, stage, tax basis, recipient and channel before paying.'
     elif any(k in q for k in ['company','genuine','real','legit','organization','firm']):
         items=[e for e in ctx['evidence'] if 'organization' in e.get('category','') or 'identity' in e.get('category','')]
         answer=identity+'\n'+(findings(items) or 'No independent company/domain verification is recorded here. A submitted name is a claim, not proof that this recruiter represents the company.')
@@ -50,6 +59,9 @@ def answer_investigator_query(question,scan_detail):
     if any(c['claim_type']=='fee_policy_disclosure' for c in ctx['claims']):
         from app.services.program_claims import program_unknowns
         answer+='\n'+' '.join(program_unknowns(ctx['claims']))
+    a=ctx['assessment'];risk=a.get('risk_indicators',{}).get('label','Insufficient evidence to assess');auth=a.get('authenticity',{}).get('label','Unverified')
+    if not answer.startswith(identity):answer=identity+'\n'+answer
+    answer+='\nRisk indicators: '+risk+'. Authenticity: '+auth+'. Overall assessment: '+assessment+'.'
     answer+='\n'+scope
     citations=list({(c.get('source_id'),c.get('claim_id'),c.get('start'),c.get('end')):c for c in citations}.values())
     return {'answer':redact_sensitive_credentials(answer),'grounded_in_evidence':True,'evidence_referenced':refs,

@@ -1,3 +1,18 @@
+# Additive final-readiness fields — 2 November 2026
+
+Scan/case assessment objects now include `risk_indicators`, `authenticity`, `processing`,
+`coverage` (completed/total/criteria/meaning) and `confidence_explanation`. Existing
+state, label, risk_score, verified_claims, offer_authenticity and fusion fields retain
+their contracts. `authenticity.offer_status` remains UNVERIFIED: only specific cited
+claims can have independent support. Unknown historical execution counts are null.
+
+`GET /api/dashboard` retains legacy raw-scan `stats`/`charts` and adds
+`investigation_stats`, `investigation_risk_distribution`, `risk_indicator_distribution`,
+`investigation_basis`, `investigation_case_count` and `standalone_scan_count`. The UI uses unique
+investigation totals; weekly and recent histories explicitly describe source scans.
+Current and historical case-linked scan IDs are excluded from standalone totals.
+No endpoint or database column was removed. See FINAL_DEMO_READINESS_REPORT.md.
+
 # API
 
 Base path: `/api`. Full runtime schemas: `/docs` and `/openapi.json`.

@@ -16,7 +16,11 @@ DEMAND = re.compile(r"\b(pay|deposit|transfer|remit|send\s+money)\b", re.I)
 
 
 def negated_payment_context(text: str, start: int) -> bool:
-    prefix = re.split(r"[\n!?;]|(?<!Rs)\.(?!\d)|\b(?:but|however|instead)\b", text[max(0, start-120):start], flags=re.I)[-1]
+    segment=text[max(0,start-120):start]
+    # Preserve negation across a comma-delimited PDF/OCR list, while ordinary
+    # line/sentence boundaries and a new payment verb still reset its scope.
+    segment=re.sub(r',\s*\n\s*',', ',segment)
+    prefix = re.split(r"[\n!?;]|(?<!Rs)\.(?!\d)|\b(?:but|however|instead)\b", segment, flags=re.I)[-1]
     negatives = list(re.finditer(r"\b(no|not|without|zero|never|do\s+not|don't)\b", prefix, re.I))
     return bool(negatives) and not re.search(r"\b(pay|transfer|send|remit|mandatory)\b", prefix[negatives[-1].end():], re.I)
 

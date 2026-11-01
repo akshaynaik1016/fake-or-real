@@ -28,10 +28,10 @@ export const DemoPage: React.FC = () => {
       title: "Synthetic TCS NextStep comparison",
       expectedRisk: "UNDETERMINED",
       category: "internship",
-      badge: "Legitimate Baseline",
+      badge: "Unverified reference example",
       description: "Synthetic comparison using a bundled domain reference. No live corporate registry, sender or offer authorization is asserted.",
       domain: "nextstep.tcs.com",
-      highlights: ["Official Domain Verified", "Synthetic DNS / TLS fixtures", "Zero Fee Requirement", "Bundled reference match"],
+      highlights: ["Bundled domain reference", "Synthetic DNS / TLS fixtures", "Zero Fee Requirement", "Bundled reference match"],
       latency: "1.2s"
     },
     {

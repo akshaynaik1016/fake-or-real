@@ -76,7 +76,7 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
     meta_data = [
         [Paragraph("<b>Report ID:</b>", body_style), Paragraph(escape(str(scan_data.get("id", "N/A"))), body_style),
          Paragraph("<b>Date/Time:</b>", body_style), Paragraph(datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"), body_style)],
-        [Paragraph("<b>Concern index:</b>", body_style), Paragraph("Undetermined" if trust_score is None else f"{100-trust_score}/100", body_style),
+        [Paragraph("<b>Concern index:</b>", body_style), Paragraph("Not scored" if trust_score is None else f"{100-trust_score}/100", body_style),
          Paragraph("<b>Risk Level:</b>", body_style), Paragraph(f"<b>{risk_level}</b>", body_style)],
         [Paragraph("<b>Confidence:</b>", body_style), Paragraph(f"{confidence}/100 (heuristic)", body_style),
          Paragraph("<b>Target Type:</b>", body_style), Paragraph(str(scan_data.get("input_type", "Text")).upper(), body_style)],
@@ -91,6 +91,15 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
     story.append(meta_table)
     story.append(Spacer(1, 15))
     
+    assessment=(scan_data.get('investigation') or {}).get('assessment') or scan_data.get('assessment') or {}
+    if assessment.get('risk_indicators'):
+        story.append(Paragraph('OBSERVED RISK SIGNALS: '+escape(assessment['risk_indicators']['label']),styles['Heading3']))
+        story.append(Paragraph(escape(assessment['risk_indicators']['explanation']),body_style))
+        story.append(Paragraph('AUTHENTICITY: '+escape(assessment['authenticity']['label']),styles['Heading3']))
+        story.append(Paragraph(escape(assessment['authenticity']['explanation']),body_style))
+        coverage=assessment['coverage']
+        story.append(Paragraph(escape(f"Coverage: {coverage['percent']}% | completed {coverage['completed'] if coverage['completed'] is not None else 'not recorded'} / {coverage['total'] if coverage['total'] is not None else 'not recorded'} recorded check slots. Source processing and extraction are separate from independent corroboration."),body_style))
+        story.append(Paragraph(escape(assessment['confidence_explanation']),body_style))
     # Summary
     story.append(Paragraph("<b>EXECUTIVE FORENSIC SUMMARY</b>", styles['Heading3']))
     summary_text = scan_data.get("summary", "Analysis completed.")
@@ -109,7 +118,7 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
         story.append(Spacer(1,12))
     fusion = investigation.get("fusion") or {}
     story.append(Paragraph("<b>EVIDENCE FUSION — " + escape(fusion.get("assessment_mode", "UNAVAILABLE")) + "</b>", styles['Heading3']))
-    for line in [f"Risk: {fusion.get('risk_level', 'UNKNOWN')} | Risk score: {fusion.get('risk_score')} | Evidence confidence: {fusion.get('confidence', 0)} | Coverage: {fusion.get('evidence_coverage', 0)}%",
+    for line in [f"Risk: {fusion.get('risk_level', 'UNKNOWN')} | Risk index: {'Not scored' if fusion.get('risk_score') is None else fusion.get('risk_score')} | Evidence reliability (heuristic): {fusion.get('confidence', 0)} | Coverage: {fusion.get('evidence_coverage', 0)}%",
                  "Specific offer authenticity remains unresolved. Heuristic scores are not calibrated probabilities."] + fusion.get("unknowns", []):
         story.append(Paragraph(escape(line), body_style))
     for result in investigation.get("research", []):
@@ -123,7 +132,7 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
         for line in lines:story.append(Paragraph(escape(str(line)),body_style))
         story.append(Spacer(1,6))
     # Verification Checklist Table
-    story.append(Paragraph("<b>VERIFICATION CHECKLIST (9-POINT AUDIT)</b>", styles['Heading3']))
+    story.append(Paragraph("<b>VERIFICATION CHECKLIST (RECORDED CHECKS)</b>", styles['Heading3']))
     checklist_data = [
         [Paragraph("<b>Verification Check</b>", table_header_style),
          Paragraph("<b>Status</b>", table_header_style),
@@ -137,6 +146,8 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
             Paragraph(escape((check.get("details") or "")[:160]), body_style)
         ])
     
+    if len(checklist_data)==1:
+        checklist_data.append([Paragraph("No case-level checklist recorded",body_style),Paragraph("NOT RECORDED",body_style),Paragraph("See recorded coverage slots and preserved per-source investigations. No independent check is implied by this empty checklist.",body_style)])
     checklist_table = Table(checklist_data, colWidths=[120, 80, 320])
     checklist_table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0f172a')),
@@ -149,6 +160,8 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
     
     # Critical Evidence Findings
     story.append(Paragraph("<b>KEY OBSERVED EVIDENCE</b>", styles['Heading3']))
+    if not scan_data.get("evidence"):
+        story.append(Paragraph("No qualifying concern recorded. This does not establish safety or authenticity.",body_style))
     for ev in scan_data.get("evidence", []):
         severity_label="REFERENCE OBSERVATION" if ev.get("severity")=="verified" else ev.get("severity","MODERATE").upper()
         ev_title = f"[{severity_label}] {ev.get('category', '').replace('_', ' ').title()}"

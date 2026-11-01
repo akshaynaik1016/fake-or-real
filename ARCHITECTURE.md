@@ -1,3 +1,17 @@
+# Final-readiness extension — 2 November 2026
+
+`assessment_dimensions` derives observed concern, scoped authenticity, processing,
+and recorded coverage from the same persisted evidence and claims as the existing
+assessment. It does not change fusion formulas or let language providers score cases.
+`assessment_semantics` projects these fields for legacy snapshots without mutating or
+rescanning them. Cases list/revisions, chat and reports consume the same projection.
+
+`dashboard_investigations` deduplicates active cases against current AND historical
+source scan IDs while keeping legacy raw-scan metrics. React `AssessmentDimensions`
+shares the labels across scan/case/list/history/dashboard views. `GraphView` guards
+the lazy graph chunk, and `TrustGraph` retains React Flow with measured fit and
+record-list fallback. Full details and limitations: FINAL_DEMO_READINESS_REPORT.md.
+
 # Architecture
 
 Existing React/TypeScript/Vite application and FastAPI/SQLAlchemy services are

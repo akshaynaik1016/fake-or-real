@@ -1,0 +1,136 @@
+{
+  "synthetic": true,
+  "dataset": "Final demo readiness A–T",
+  "records": [
+    {
+      "id": "A",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "Nexora Digital Labs",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: Nexora Digital Labs\nCongratulations! You have been selected without an interview for a remote software internship. Monthly stipend INR 45,000. Pay refundable registration fee INR 999 within 30 minutes. Send your Aadhaar, bank details and payment screenshot."
+    },
+    {
+      "id": "B",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "BrightPath Software Solutions",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: BrightPath Software Solutions\nSoftware Development Internship. Bengaluru. Hybrid. Three months. Monthly stipend INR 18,000. Resume screening, technical assessment and interview. No application, registration or training fee. No payment required. No OTP requests. Written offer provided."
+    },
+    {
+      "id": "C",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "Microsoft Corporation",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: Microsoft Corporation\nSynthetic sender: recruiter@microsoft-internships.example\nSelected without interview. Stipend INR 60,000. Pay INR 2,499 security deposit within 20 minutes. Send OTP.",
+      "note": "Real company name used only as an impersonation claim; sender and offer are fictional."
+    },
+    {
+      "id": "D",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "Synthetic Recruitment Agency",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: Synthetic Recruitment Agency\nGeneral/EWS/OBC fee INR 1,000 plus GST INR 180, total INR 1,180. SC/ST/PwBD/Ex-Servicemen exempt. Service-bond liability INR 2,00,000 applies only to early departure."
+    },
+    {
+      "id": "E",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "SkillBridge Academy",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: SkillBridge Academy\nWe offer online training and internship. Training fees applicable. We claim collaboration with Microsoft, IBM, Wipro and Infosys. Placement assistance guaranteed. Job opportunities depend on performance."
+    },
+    {
+      "id": "F",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "BluePeak Technologies",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: BluePeak Technologies\nFull-stack internship. Stipend INR 20,000. Technical interview required. No registration fee.",
+      "second_text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: BluePeak Technologies\nFull-stack internship. Selected immediately. Stipend INR 35,000. No interview. Pay refundable INR 1,499 registration fee."
+    },
+    {
+      "id": "G",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "text only"
+    },
+    {
+      "id": "H",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "text + mocked URL"
+    },
+    {
+      "id": "I",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "text + generated PDF + five generated images"
+    },
+    {
+      "id": "J",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "all formats + sender"
+    },
+    {
+      "id": "K",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "failed URL with valid text/PDF"
+    },
+    {
+      "id": "L",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "six images rejected"
+    },
+    {
+      "id": "M",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "duplicate images"
+    },
+    {
+      "id": "N",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "eight grounded chat questions"
+    },
+    {
+      "id": "O",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "at least 20 graph/evidence records and initial rendering"
+    },
+    {
+      "id": "P",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "exact-document unavailable"
+    },
+    {
+      "id": "Q",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "Synthetic No Fee Program",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: Synthetic No Fee Program\nInternship. No registration fee, security deposit, or training fee is required."
+    },
+    {
+      "id": "R",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "organization": "Synthetic Mixed Program",
+      "text": "SYNTHETIC REGRESSION — NOT A REAL OFFER\nOrganization: Synthetic Mixed Program\nMonthly stipend INR 25,000. Training fee INR 1,500. Early-departure service bond INR 2,00,000."
+    },
+    {
+      "id": "S",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "existing synthetic BEL-style fixture"
+    },
+    {
+      "id": "T",
+      "synthetic": true,
+      "purpose": "Deterministic demo regression, not real-world authenticity ground truth.",
+      "workflow": "existing feature API inventory"
+    }
+  ]
+}

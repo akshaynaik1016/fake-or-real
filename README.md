@@ -1,3 +1,20 @@
+# Final demo readiness — 2 November 2026
+
+The existing application now presents **observed risk indicators** separately from
+**scoped authenticity**, retaining overall Undetermined/Elevated concern and all
+legacy response fields. BrightPath is low observed concern, unverified and Not scored.
+Coverage shows recorded check slots; evidence reliability remains a heuristic.
+Dashboard investigation totals count one case once, including after source corrections.
+
+**378 backend tests, 24 frontend tests, TypeScript and the production build passed.**
+The separate 45-scenario synthetic benchmark passed; it is not real-world accuracy.
+Actual browser checks covered text intake, same-case Add Evidence, large TrustGraph,
+Investigator citations, dashboard/history and PDF download. Native PDF/PNG batch intake
+was also exercised through HTTP; the browser file picker was not retested.
+See FINAL_DEMO_READINESS_REPORT.md for the complete A–T matrix, exact commands,
+feature-preservation boundaries, 90-second script and **READY WITH LIMITATIONS** verdict.
+No model, dependency, migration, commit or push was added. Earlier counts below are historical.
+
 # Latest organization-role and multi-input fixes — 1 November 2026
 
 Primary organizer extraction now distinguishes claimed collaborators and certificate

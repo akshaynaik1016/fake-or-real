@@ -21,6 +21,23 @@ def extract_organization_roles(text,registry):
             while a<b and text[a].isspace():a+=1
             while b>a and text[b-1].isspace():b-=1
             add(a,b,'CLAIMED_COLLABORATOR','explicit_partner_list');occupied.append((a,b))
+    # Plain comma/and lists are role-bearing too, including names absent from
+    # the bundled registry. Stop before a new proposition; never add "other companies".
+    for m in re.finditer(r'\b(?:collaborat(?:e|es|ing|ion)|partners?(?:hip)?)\s+with\s+([^.!?\n]{2,400})',text,re.I):
+        if '[' in m.group(1):continue
+        end=re.search(r'\b(?:to\s+(?:offer|provide|organize)|and\s+(?:organizing|offering|providing))\b',m.group(1),re.I)
+        body=m.group(1)[:end.start()] if end else m.group(1)
+        for part in re.finditer(r'[^,;]+?(?=\s+(?:and|&)\s+|[,;]|$)',body):
+            a=m.start(1)+part.start();b=m.start(1)+part.end()
+            while a<b and text[a].isspace():a+=1
+            while b>a and text[b-1].isspace():b-=1
+            value=text[a:b]
+            if re.match(r'^(?:and|&)\s+',value,re.I):
+                a+=re.match(r'^(?:and|&)\s+',value,re.I).end();value=text[a:b]
+            if re.search(r'\b(?:other|more|companies|organizations|organisations|etc)\b',value,re.I):continue
+            if not re.fullmatch(r'[A-Z][A-Za-z0-9.& -]{1,100}',value):continue
+            if any(x<=a<y for x,y in occupied):continue
+            add(a,b,'CLAIMED_COLLABORATOR','plain_partner_list');occupied.append((a,b))
     role_labels=[('PRIMARY_ORGANIZER',r'organization|organisation|company|program\s+organizer|programme\s+organiser|organizer|organiser|organized by|organisation name|company name'),
                  ('CLAIMED_EMPLOYER',r'employer|hiring\s+company'),('CLAIMED_TRAINING_PROVIDER',r'training\s+provider'),
                  ('CLAIMED_CERTIFICATE_ISSUER',r'certificate\s+issuer|certificates?\s+issued\s+by'),('PAYMENT_RECIPIENT',r'payment\s+recipient|payee'),('CLAIMED_DOMAIN_OWNER',r'domain\s+owner|website\s+owner')]

@@ -27,7 +27,7 @@ SEEDED_DEMO_CASES: List[Dict[str, Any]] = [
     },
     {
         "id": "demo-genuine-tcs-opportunity",
-        "title": "Genuine TCS NQT Internship / Hiring Drive",
+        "title": "Synthetic TCS domain-reference comparison",
         "category": "legitimate_opportunity",
         "input_type": "text",
         "claimed_organization": "TCS",
@@ -41,8 +41,8 @@ SEEDED_DEMO_CASES: List[Dict[str, Any]] = [
             "Corporate Identifier: CIN L22210MH1995PLC084781 (MCA / ROC Mumbai)\n"
             "Selection is strictly merit-based following the nationwide assessment."
         ),
-        "expected_risk": "LOW RISK",
-        "description": "Authentic enterprise drive: official domain match, verified MCA corporate registration, zero application fees."
+        "expected_risk": "UNDETERMINED",
+        "description": "Synthetic reference comparison only; no live registry, recruiter or specific offer authentication. A no-fee claim does not verify the offer."
     },
     {
         "id": "demo-fake-google-scholarship",
@@ -91,7 +91,7 @@ SEEDED_DEMO_CASES: List[Dict[str, Any]] = [
 ]
 
 def get_demo_cases() -> List[Dict[str, Any]]:
-    return SEEDED_DEMO_CASES
+    return [{**case,"synthetic":True,"description":"Synthetic scenario, not a real offer. "+case["description"]} for case in SEEDED_DEMO_CASES]
 
 def get_demo_case_by_id(case_id: str) -> Dict[str, Any]:
     for case in SEEDED_DEMO_CASES:

@@ -8,3 +8,5 @@ export function riskIndex(trust:number|null|undefined,level:string):string {
 export function researchLabel(status:string):string {
   return status==='COMPLETED'?'Context retrieved · offer verification unresolved':'Research unavailable or not performed · verification unresolved';
 }
+
+export function concernIndex(trust:number|null|undefined,level:string):string {const value=riskIndex(trust,level);return value==='Undetermined'?'Not scored':value;}

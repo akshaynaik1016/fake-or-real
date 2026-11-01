@@ -55,6 +55,8 @@ def extract_claims(source_id:str,text:str,input_type:str,submitted_content:str='
         if m['role']=='PAYMENT' and Decimal(m['value'])<=0:continue
         add({'PAYMENT':'fee','COMPENSATION':'compensation','CONTRACTUAL_LIABILITY':'contractual_penalty','REIMBURSEMENT':'reimbursement'}[m['role']],
             ({k:m[k] for k in ['value','currency','category','period']}|({k:m[k] for k in ['amount_role','applicability'] if k in m} if m['category']=='APPLICATION_FEE' else {})),m['start'],m['end'],'monetary_context')
+    for tax in money['monetary_entities']:
+        if tax['role']=='TAX':add('tax_component',{k:tax[k] for k in ['value','currency','category']},tax['start'],tax['end'],'explicit_tax_component')
     for item in money['monetary_entities']:
         if item.get('amount_role')=='BASE_FEE' and item.get('related_amount_spans'):
             refs=item['related_amount_spans'];from app.scanners.payment_scanner import MONEY

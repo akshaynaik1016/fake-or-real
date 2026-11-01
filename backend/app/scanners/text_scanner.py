@@ -47,6 +47,7 @@ def analyze_scam_language(text: str) -> Dict[str, Any]:
             matches = re.finditer(pattern_regex, text)
             for match in matches:
                 matched_snippet = match.group(0)
+                if label=='Guaranteed outcome promise' and re.match(r'\s+assistance\b',text[match.end():],re.I):continue
                 if category == "payment_pressure":
                     from app.scanners.payment_scanner import negated_payment_context,uncertain_payment_context
                     if negated_payment_context(text, match.start()) or re.match(r"\s*(?:of|is|are|:)?\s*(?:waived|not required|none|zero|₹\s*0\b|(?:Rs\.?|INR)\s*0\b)",text[match.end():],re.I):

@@ -67,7 +67,7 @@ def fuse_evidence(evidence: list[dict], checks: list[dict], config: FusionConfig
     if contradiction:
         unknowns.append("Conflicting observations in the same correlation group require independent verification")
     return {"assessment_mode": mode, "risk_level": level, "risk_score": score if sufficient else None,
-        "confidence": confidence, "evidence_coverage": coverage,
+        "confidence": confidence, "evidence_coverage": coverage, "coverage_completed":completed,"coverage_total":len(checks),
         "prior": config.prior, "calibration_reference": config.calibration_reference,
         "evidence_updates": updates,
         "supporting_evidence": [e["id"] for e in eligible if ratio(e) > 1],

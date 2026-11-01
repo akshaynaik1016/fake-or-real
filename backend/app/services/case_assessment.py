@@ -132,7 +132,7 @@ def assess_case(case,sources,claims):
     from app.services.assessment_semantics import assessment_for
     from app.services.program_graph import enrich_program_graph
     graph=enrich_program_graph(enrich_recruitment_graph(case_graph(case.id,case.title,source_map,claims,findings,evidence,case.research_results),claims,notice_review,case.id),claims,case.id)
-    return {'source_limits':{'url':max(1,settings.CASE_MAX_URLS),'pdf':max(1,settings.CASE_MAX_PDFS)},'notice_review':notice_review,'assessment':assessment_for(fusion,evidence,claims),'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
+    return {'source_limits':{'url':max(1,settings.CASE_MAX_URLS),'pdf':max(1,settings.CASE_MAX_PDFS)},'coverage_checks':checks,'notice_review':notice_review,'assessment':assessment_for(fusion,evidence,claims,{'sources':sources,'coverage_checks':checks,'notice_review':notice_review,'research':case.research_results,'recommendations':recommendations}),'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
         'claims':claims,'cross_source_findings':findings,'evidence':evidence,'missing_information':unknowns,
         'duplicate_sources':duplicates,'distinct_content_count':len([s for s in canonical if s['processing_status']=='READY']),
         'recommendations':sorted(recommendations,key=lambda a:-a.get('ranking_score',0)),

@@ -18,6 +18,13 @@ def program_fields(text):
         add('placement_promise',{'wording':m.group(),'scope':'JOB_PLACEMENT','job_guaranteed':True},m)
     for m in re.finditer(r'\btraining\s+fees?\s+(?:are\s+|is\s+)?applicable\b',text,re.I):
         add('fee_policy_disclosure',{'category':'TRAINING_FEE','applies':True,'amount':None,'authorization':'UNRESOLVED'},m)
+    for m in re.finditer(r'\b(?:guaranteed\s+placement\s+assistance|placement\s+assistance\s+(?:is\s+)?guaranteed)\b',text,re.I):
+        add('placement_promise',{'wording':m.group(),'scope':'PLACEMENT_ASSISTANCE','job_guaranteed':None},m)
+    for required,pattern in [(False,r'\b(?:no\s+interview|(?:selected\s+)?without\s+(?:an?\s+)?interview)\b'),(True,r'\b(?:technical\s+)?interview\s+(?:is\s+)?required\b')]:
+        for m in re.finditer(pattern,text,re.I):
+            if required and re.search(r'\bno\s*$',text[max(0,m.start()-5):m.start()],re.I):continue
+            condition=re.match(r'\s+(?:if|for|unless)\b[^.\n]{1,100}',text[m.end():],re.I)
+            add('interview_process',{'required':required,'condition':condition.group().strip() if condition else None},m)
     return fields
 
 def program_unknowns(claims):

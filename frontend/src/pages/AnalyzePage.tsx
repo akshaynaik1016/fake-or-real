@@ -232,7 +232,7 @@ export const AnalyzePage: React.FC = () => {
             className="text-xs px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900/60 transition-colors flex items-center space-x-1.5 cursor-pointer font-medium"
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Genuine TCS NQT Drive</span>
+            <span>TCS careers reference (unverified offer)</span>
           </button>
           <button
             type="button"

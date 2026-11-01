@@ -1,8 +1,9 @@
 import { lazy, Suspense, useState } from 'react';
 import { executeInvestigationAction, getScanById, type ScanDetail } from '../../api/client';
+import {AssessmentDimensions} from './AssessmentDimensions';
 import {RecruitmentReview} from './RecruitmentReview';
 import {assessmentLabel,researchLabel} from './assessmentSemantics';
-const TrustGraph = lazy(() => import('./TrustGraph'));
+import {GraphView} from './GraphView';
 
 export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpdate: (scan: ScanDetail) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
@@ -22,11 +23,12 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
     <section className="glass-card rounded-2xl p-6 space-y-4" aria-label="Evidence fusion">
       <div className="flex flex-wrap justify-between gap-3"><h2 className="font-bold text-xl">Evidence Fusion</h2>
         <span className="text-xs font-mono text-cyan-300">{fusion.assessment_mode} · {state.status} · revision {state.revision}</span></div>
+      <AssessmentDimensions assessment={state.assessment}/>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[['Risk classification', assessmentLabel(state.assessment?.state||fusion.risk_level)],
-          ['Risk score (higher = more concern)', fusion.risk_score === null ? 'Undetermined' : `${fusion.risk_score}/100`],
-          ['Evidence confidence', `${fusion.confidence}/100`], ['Investigation coverage', `${fusion.evidence_coverage}%`]].map(([label, value]) =>
-          <div className="rounded-xl bg-slate-950/70 p-4" key={label}><p className="text-xs text-slate-400">{label}</p><p className="text-lg font-bold mt-2">{value}</p></div>)}
+          ['Risk score (higher = more concern)', fusion.risk_score === null ? 'Not scored' : `${fusion.risk_score}/100`],
+          ['Evidence reliability (heuristic)', `${fusion.confidence}/100`], ['Investigation coverage', `${fusion.evidence_coverage}%`]].map(([label, value]) =>
+          <div className="rounded-xl bg-slate-950/70 p-4" key={label}><p className="text-xs text-slate-400" title={label.startsWith('Evidence reliability')?state.assessment?.confidence_explanation:undefined}>{label}</p><p className="text-lg font-bold mt-2">{value}</p></div>)}
       </div>
       <p className="text-sm text-amber-200">Heuristic risk and confidence are decision-support indices, not validated probabilities. Risk and independent verification are separate. Specific offer authenticity is unresolved.</p>
       {!!state.assessment?.verified_claims.length&&<div className="text-xs text-cyan-200">Independently verified claim (limited scope): {state.assessment.verified_claims.map(c=><p key={c.evidence_id}>{c.scope} · claim {c.claim_id} · evidence {c.evidence_id}</p>)}<p>These scoped claims do not authenticate the overall offer.</p></div>}
@@ -41,7 +43,7 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
         <ul className="list-disc pl-5 mt-4 text-xs text-amber-200 space-y-2">{fusion.unknowns.map((u, i) => <li key={i}>{u}</li>)}</ul>
       </details>
     </section>
-    <RecruitmentReview claims={state.claims||[]} evidence={state.evidence} review={state.notice_review}/>
+    <RecruitmentReview claims={state.claims||[]} evidence={state.evidence} review={state.notice_review} authenticityState={state.assessment?.authenticity?.state}/>
     {!!state.monetary_entities?.length && <section className="glass-card rounded-2xl p-6 space-y-3" aria-label="Monetary entities">
       <h2 className="font-bold text-lg">Amounts in the submission</h2>
       {state.monetary_entities.map((amount,i) => <div key={i} className="text-sm border-t border-slate-700 pt-2">
@@ -77,7 +79,7 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
     </section>
     <section className="glass-card rounded-2xl p-6 space-y-4"><h2 className="font-bold text-lg">TrustGraph</h2>
       <p className="text-xs text-slate-400">Pan, zoom and select an entity to inspect its provenance. Red borders highlight recorded identity inconsistencies.</p>
-      <Suspense fallback={<p>Loading graph…</p>}><TrustGraph graph={state.graph} /></Suspense>
+      <GraphView graph={state.graph}/>
     </section>
     <section id="next-investigation" className="glass-card rounded-2xl p-6 space-y-4">
       <h2 className="font-bold text-lg">Next Best Investigation</h2>

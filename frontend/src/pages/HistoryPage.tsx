@@ -1,5 +1,6 @@
+import {AssessmentLabels} from '../components/common/AssessmentDimensions';
 import { fetchJson } from '../api/client';
-import {riskIndex} from '../components/common/assessmentSemantics';
+import {concernIndex as riskIndex} from '../components/common/assessmentSemantics';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { History, Search, Filter, Globe, ArrowRight, ShieldCheck, AlertOctagon } from 'lucide-react';
@@ -117,7 +118,7 @@ export const HistoryPage: React.FC = () => {
                   <span className="text-[10px] font-mono text-slate-400 block uppercase">Concern index</span>
                   <span className="font-mono text-base font-extrabold text-white">{riskIndex(sc.trust_score,sc.risk_level)}</span>
                 </div>
-                <RiskBadge level={sc.risk_level} size="sm" />
+                <RiskBadge level={sc.risk_level} size="sm" /><AssessmentLabels assessment={sc.assessment}/>
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyber-cyan transition-colors" />
               </div>
             </Link>

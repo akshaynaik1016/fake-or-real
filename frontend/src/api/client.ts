@@ -179,7 +179,8 @@ export interface ResearchSource {
   id: string; title: string; url: string; extracted_information: string; retrieved_at: string;
   source_type: string; relevance: number; claim: string; verification_status: string;
 }
-export interface Assessment {state:string;label:string;verification_status:string;offer_authenticity:string;risk_score:number|null;verified_claims:{claim_id:string;evidence_id:string;scope:string}[];explanation:string}
+export interface AssessmentDimensions {risk_indicators?:{state:string;label:string;explanation:string;evidence_ids:string[]};authenticity?:{state:string;label:string;explanation:string;offer_status:string;performed:boolean};processing?:{submitted:number|null;processed:number|null;failed:number;awaiting_review:number;claims_extracted:number;extraction_note:string};coverage?:{completed:number|null;total:number|null;percent:number;meaning:string;criteria:{name:string;completed:boolean;reason:string}[]};confidence_explanation?:string}
+export interface Assessment extends AssessmentDimensions {state:string;label:string;verification_status:string;offer_authenticity:string;risk_score:number|null;verified_claims:{claim_id:string;evidence_id:string;scope:string}[];explanation:string}
 export interface StructuredClaim {id:string;source_id:string;claim_type:string;value:unknown;excerpt:string;location:{field:string;start:number;end:number;page?:number};extraction_method:string;verification_status:string}
 export interface NoticeReview {manual_verification?:{official_domains:string[];authority_reason:string;fields:{claim_type:string;value:unknown;source_id:string;excerpt:string}[]};claim_results:{id:string;claim_id:string;claim_type:string;value:unknown;status:string;scope:string;reason:string;citations:GraphCitation[]}[];unknowns:string[];independent_documents:{id:string;title:string;url:string;retrieved_at:string}[];offer_authenticity?:string}
 export interface Investigation {
