@@ -11,8 +11,6 @@ router = APIRouter(prefix="/ai", tags=["AI Investigator"])
 async def investigate_with_ai(req: AIChatRequest, db: Session = Depends(get_db)):
     detail = await scan_response(db, req.scan_id)
     state = detail["investigation"]
-    detail["claimed_organization"] = state["claimed_organization"]
-    detail["primary_domain"] = next((e["value"] for e in state["entities"] if e["type"] == "domain"), None)
     result = answer_investigator_query(req.question, detail)
     result["evidence_ids"] = [e["id"] for e in state["evidence"] if e["evidence"] in result["evidence_referenced"]]
     return AIChatResponse(**result)

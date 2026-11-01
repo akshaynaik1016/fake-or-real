@@ -53,6 +53,9 @@ def compare_claims(case_id,claims,sources):
                 elif kind in {'advertisement_number','job_title','publication_date','vacancies','application_deadline','application_start','payment_destination'}:
                     classification='CONFIRMED_CONTRADICTION' if kind in {'advertisement_number','vacancies','application_deadline','publication_date'} else 'POSSIBLE_INCONSISTENCY'
                     description='Submitted recruitment sources state different '+kind.replace('_',' ')+' values. This does not establish which source is authentic.'
+                elif kind in {'certificate_association','placement_promise'}:
+                    classification='CONTEXT_DEPENDENT' if kind=='placement_promise' and av.get('scope')!=bv.get('scope') else 'POSSIBLE_INCONSISTENCY'
+                    description='Submitted '+kind.replace('_',' ')+' wording differs; issuer, guarantee scope and conditions require clarification. Different promise scopes are not automatically contradictory.'
                 elif kind=='duration':
                     def duration(v):
                         return ('month',v['number']*(12 if v['unit']=='year' else 1)) if v['unit'] in {'month','year'} else ('day',v['number']*(7 if v['unit']=='week' else 1))
@@ -73,6 +76,19 @@ def compare_claims(case_id,claims,sources):
                     classification='CONFIRMED_CONTRADICTION' if av['exclusive'] or bv['exclusive'] else 'POSSIBLE_INCONSISTENCY'
                     description='Application instructions name different channels'+(' despite an explicit only-channel instruction.' if av['exclusive'] or bv['exclusive'] else '; exclusivity is not established.')
                 if description:add(kind.upper()+'_CONFLICT',classification,severity,description,[a,b])
+    if len(sources)>1:
+        for kind in ['claimed_collaborator','certificate_association']:
+            additions=[c for c in grouped.get(kind,[]) if len({r['source_id'] for r in grouped[kind] if r['normalized_value']==c['normalized_value']})==1]
+            if additions:add('CLAIM_CONTEXT','NEW_INFORMATION','low','Additional submitted '+kind.replace('_',' ')+' claims. Omission in another source is not a contradiction or independent verification.',additions)
+    from app.services.fee_policy_scope import scope_comparison
+    rules=grouped.get('fee_policy_rule',[])
+    for i,a in enumerate(rules):
+        for b in rules[i+1:]:
+            if a['source_id']==b['source_id'] or a['value']['policy']==b['value']['policy']:continue
+            overlap=set(a['value']['categories'])&set(b['value']['categories'])
+            if not overlap:continue
+            status=scope_comparison(a['value'],b['value'])
+            add('CATEGORY_FEE_POLICY',status,'moderate','Category fee policy comparison for '+', '.join(sorted(overlap))+': '+status.replace('_',' ').lower()+'. Compare the exact notice, stage and applicability conditions; this is not independent verification.',[a,b])
     policies=grouped.get('fee_policy',[])
     for fee in grouped.get('fee',[]):
         opposite=[c for c in policies if c['source_id']!=fee['source_id'] and c['value']=='NO_FEES']

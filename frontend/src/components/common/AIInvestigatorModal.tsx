@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bot, Send, X, ShieldAlert, Sparkles, CheckCircle2, Terminal } from 'lucide-react';
 import { askAIInvestigator } from '../../api/client';
+import {askCaseInvestigator,type Citation} from '../../api/cases';
 
 interface AIInvestigatorModalProps {
   scanId: string;
+  caseId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -12,9 +14,12 @@ interface ChatMessage {
   sender: 'user' | 'assistant';
   text: string;
   evidenceReferenced?: string[];
+  evidenceIds?:string[];
+  contextRevision?:number;
+  citations?:Citation[];
 }
 
-export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId, isOpen, onClose }) => {
+export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId, caseId, isOpen, onClose }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       sender: 'assistant',
@@ -31,6 +36,7 @@ export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId
     }
   }, [messages, isOpen]);
 
+  useEffect(()=>{setMessages([{sender:'assistant',text:'Ask about this stored investigation. Answers distinguish submitted claims, recorded concerns and unresolved independent verification.'}]);},[scanId,caseId]);
   if (!isOpen) return null;
 
   const quickPrompts = [
@@ -51,11 +57,11 @@ export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId
     setLoading(true);
 
     try {
-      const res = await askAIInvestigator(scanId, query);
+      const res = caseId?await askCaseInvestigator(caseId,query):await askAIInvestigator(scanId, query);
       const assistantMsg: ChatMessage = {
         sender: 'assistant',
         text: res.answer,
-        evidenceReferenced: res.evidence_referenced
+        evidenceReferenced: res.evidence_referenced, evidenceIds:res.evidence_ids, citations:res.citations, contextRevision:res.context_revision
       };
       setMessages(prev => [...prev, assistantMsg]);
     } catch (e) {
@@ -91,7 +97,7 @@ export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId
                   Evidence-Grounded
                 </span>
               </div>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">Strictly answers using observed facts, DNS, and identity records</p>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">Uses recorded claims and evidence; unavailable checks remain unresolved</p>
             </div>
           </div>
           <button 
@@ -118,13 +124,14 @@ export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId
                     : 'bg-cyber-surface border border-cyber-border text-slate-200 rounded-tl-none shadow-sm'
                 }`}
               >
-                <p className="whitespace-pre-line">{msg.text}</p>
+                <p className="whitespace-pre-line">{msg.text}</p>{msg.contextRevision!==undefined&&<p className="text-[10px] text-slate-400 mt-2">Recorded snapshot revision {msg.contextRevision}</p>}
+                {!!msg.citations?.length&&<details className="text-xs mt-3"><summary>Source references ({msg.citations.length})</summary>{msg.citations.map((c,j)=><div key={j} className="mt-2"><a className="text-cyan-300 underline" href={c.url||`#source-${c.source_id}`} onClick={onClose}>{c.source_title||c.source_id}</a><p>{c.excerpt}</p><p>{c.page?`Page ${c.page} · `:''}characters {c.start}–{c.end}</p></div>)}</details>}
                 {msg.evidenceReferenced && msg.evidenceReferenced.length > 0 && (
                   <div className="mt-3 pt-2.5 border-t border-slate-700/60 text-[11px] text-cyan-300 font-mono">
                     <span className="font-bold block mb-1 text-slate-300 uppercase tracking-wider text-[10px]">Referenced Evidence:</span>
                     <ul className="list-disc list-inside space-y-1">
                       {msg.evidenceReferenced.map((ev, idx) => (
-                        <li key={idx} className="line-clamp-2">{ev}</li>
+                        <li key={idx}><a className="underline" href={`#evidence-${msg.evidenceIds?.[idx]||''}`} onClick={onClose}>{ev}</a></li>
                       ))}
                     </ul>
                   </div>

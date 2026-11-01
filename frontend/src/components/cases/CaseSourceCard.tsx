@@ -1,3 +1,4 @@
+import {sourceStatus} from './intakeValidation';
 import {useEffect,useState} from 'react';
 import {Link} from 'react-router-dom';
 import {claimText,type CaseClaim,type CaseSource} from '../../api/cases';
@@ -6,7 +7,7 @@ export function CaseSourceCard({source,claims,duplicate,busy,readOnly,onRemove,o
  useEffect(()=>{setText(source.extracted_text);},[source.extracted_text]);
  const reviewable=['screenshot','pdf'].includes(source.input_type);
  return <article id={`source-${source.id}`} className="scroll-mt-24 glass-card rounded-xl border border-slate-700 p-5 space-y-3">
-  <div className="flex justify-between gap-4"><div><h3 className="font-bold">{source.title}</h3><p className="text-xs text-slate-400 mt-1">{source.input_type} · {source.processing_status} · extraction: {source.extraction_status}</p></div><button disabled={busy||readOnly} onClick={onRemove} className="text-xs text-rose-300 underline disabled:opacity-40">Remove source</button></div>
+  <div className="flex justify-between gap-4"><div><h3 className="font-bold">{source.title}</h3><p className="text-xs text-slate-400 mt-1">{source.input_type} · {sourceStatus(source)} · extraction: {source.extraction_status}</p></div><button disabled={busy||readOnly} onClick={onRemove} className="text-xs text-rose-300 underline disabled:opacity-40">Remove source</button></div>
   {source.filename&&<p className="text-xs text-slate-400 break-all">Filename metadata: {source.filename}</p>}
   {duplicate&&<p className="text-xs text-amber-200">Duplicate content: retained for provenance, excluded from additional case confidence/coverage.</p>}
   {source.error_message&&<p role="status" className="text-xs text-amber-200">{source.error_code}: {source.error_message}</p>}

@@ -3,16 +3,22 @@ export function groupClaims(claims:CitedClaim[]) {
  const groups=new Map<string,{claim:CitedClaim;references:CitedClaim[]}>();
  for(const claim of claims){const value=claim.value&&typeof claim.value==='object'?JSON.stringify(claim.value,Object.keys(claim.value).filter(k=>k!=='amount_role').sort()):String(claim.value);const key=claim.claim_type+':'+value;
   if(!groups.has(key))groups.set(key,{claim,references:[]});groups.get(key)!.references.push(claim);}
- return [...groups.values()];
+ const rank:Record<string,number>={organization:0,opportunity_type:1,domain:2,application_url:2,duration_range:3,duration:3,fee_policy_disclosure:4,fee:4,certificate_association:5,placement_promise:6,claimed_collaborator:7,organization_role:8};
+ return [...groups.values()].sort((a,b)=>(rank[a.claim.claim_type]??9)-(rank[b.claim.claim_type]??9));
 }
 export function claimValue(value:unknown):string {
  if(typeof value==='string')return /^[A-Z_]+$/.test(value)&&value.includes('_')?value.replaceAll('_',' ').toLowerCase():value;
  if(typeof value==='number')return String(value);
  if(!value||typeof value!=='object')return String(value??'Unresolved');
  const v=value as Record<string,unknown>;
+ if(v.name&&v.role)return `${v.name} · ${String(v.role).replaceAll('_',' ').toLowerCase()} (submitted)`;
+ if(v.minimum!==undefined&&v.maximum!==undefined)return `${v.minimum}–${v.maximum} ${v.unit}s (stated range)`;
+ if(v.scope==='PLACEMENT_ASSISTANCE')return `${v.wording} · assistance promised; guaranteed job placement not established`;
+ if(v.scope==='JOB_PLACEMENT')return `${v.wording} · submitted job-placement promise, unverified`;
+ if(v.category==='TRAINING_FEE'&&v.applies)return `Training fee applies · ${v.amount===null?'amount unspecified':String(v.amount)} · authorization unresolved`;
  if(v.currency&&v.value)return `${v.currency} ${v.value}${v.period?'/'+v.period:''}${v.category?' · '+String(v.category).replaceAll('_',' ').toLowerCase():''}`;
  if(v.base&&v.total)return `${v.currency} ${v.base} + stated GST → ${v.currency} ${v.total}`;
- return Object.entries(v).filter(([,x])=>x!==null).map(([k,x])=>`${k.replaceAll('_',' ')}: ${x}`).join(' · ');
+ return Object.entries(v).filter(([,x])=>x!==null).map(([k,x])=>`${k.replaceAll('_',' ')}: ${Array.isArray(x)?x.join(', '):claimValue(x)}`).join(' · ');
 }
 export function groupedResults<T extends {claim_type:string;value:unknown;status:string}>(results:T[]):T[]{
  const groups=new Map<string,T>();

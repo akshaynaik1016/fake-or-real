@@ -1,11 +1,11 @@
 from typing import Literal
 from datetime import timezone
-from fastapi import APIRouter,Depends,HTTPException,UploadFile,File,Form
+from fastapi import APIRouter,Depends,HTTPException,UploadFile,File,Form,Response
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.access import current_actor
 from app.models.all_models import InvestigationCase,InvestigationSource,CaseAssessmentRevision
-from app.schemas.cases import CaseCreate,CaseMutation,CaseSourceCreate,CaseSourceReview,CaseRename
+from app.schemas.cases import CaseCreate,CaseMutation,CaseSourceCreate,CaseSourceReview,CaseRename,CaseQuestion
 from app.services import case_service as service
 from app.services.assessment_semantics import assessment_for,integrity_view
 router=APIRouter(prefix='/cases',tags=['Multi-source cases'])
@@ -73,3 +73,24 @@ def revision(case_id:str,revision:int,db:Session=Depends(get_db),actor=Depends(c
 @router.post('/{case_id}/actions/{action_id}')
 async def action(case_id:str,action_id:str,req:CaseMutation,db:Session=Depends(get_db),actor=Depends(current_actor)):
     return await service.execute_case_action(db,service.owned_case(db,case_id,actor),action_id,req.expected_revision)
+
+
+@router.post('/{case_id}/sources/batch')
+async def batch_sources(case_id:str,payload:str=Form(...),files:list[UploadFile]=File(default=[]),db:Session=Depends(get_db),actor=Depends(current_actor)):
+    from pydantic import ValidationError
+    from app.services.case_intake import IntakePayload,intake_sources
+    case=service.owned_case(db,case_id,actor)
+    try:parsed=IntakePayload.model_validate_json(payload)
+    except ValidationError:raise HTTPException(422,'Invalid batch payload; check source types, lengths and revision')
+    return await intake_sources(db,case,parsed,files)
+
+@router.post('/{case_id}/investigate')
+def case_investigator(case_id:str,req:CaseQuestion,db:Session=Depends(get_db),actor=Depends(current_actor)):
+    from app.services.ai_investigator import answer_investigator_query
+    return answer_investigator_query(req.question,integrity_view(service.owned_case(db,case_id,actor).assessment))
+
+@router.get('/{case_id}/report/pdf')
+def case_pdf(case_id:str,db:Session=Depends(get_db),actor=Depends(current_actor)):
+    from app.services.case_report import generate_case_report
+    snapshot=integrity_view(service.owned_case(db,case_id,actor).assessment)
+    return Response(content=generate_case_report(snapshot),media_type='application/pdf',headers={'Content-Disposition':f'attachment; filename="case-{case_id}.pdf"'})

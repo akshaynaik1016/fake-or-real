@@ -114,3 +114,30 @@ recruitment_graph.py extends existing graph assembly and React Flow rendering wi
 notice, fee and channel relationships. RecruitmentReview reuses existing evidence
 components for five plain-language sections. No LLM participates in scoring or creates
 facts. See CONTEXT_AWARE_VERIFICATION_REPORT.md for observed results and limitations.
+
+
+## Reliable workspace additions
+
+case_intake composes existing add_text_source/add_file_source with batch limits,
+per-source failures and review state. case_report maps the owned stored snapshot
+into the existing PDF generator. investigator_context projects canonical claims,
+evidence, comparisons and availability for deterministic scan/case chat; it does not
+extract or rescan content. fee_policy_scope adds conservative category/stage/condition
+rules; missing scope never becomes an established match. React Flow graphOverview is
+a display projection with all underlying node/edge records retained for inspection.
+No new database tables, dependencies, model or parallel investigation engine.
+
+
+## Role-aware organizer/program reasoning
+
+organization_roles separates organizer/employer/provider names from claimed partners,
+certificate associations, explicit issuers, domain-owner claims and payees. The
+organization compatibility API returns primary names only. Existing scanning,
+case extraction, canonical chat and reports use these records. program_claims retains
+explicit ranges, assistance-promise scope and unpriced disclosures; program_graph
+adds cited overview concepts without inventing affiliations. Default program graph
+projection keeps key concepts readable; original nodes/edges remain available.
+Analyze embeds the same CaseIntake used by Cases and calls the existing API. React
+Flow now receives initial node dimensions and measured/resize-aware fitting.
+Dashboard categories remain stored CommunityReport aggregation with explicit demo
+and report-source metadata. No scoring authority is delegated to a model.

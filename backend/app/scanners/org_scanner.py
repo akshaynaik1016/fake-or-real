@@ -76,36 +76,16 @@ VERIFIED_ORGANIZATIONS_REGISTRY: Dict[str, Dict[str, Any]] = {
     }
 }
 
-def organization_mentions(text: str) -> list[dict]:
-    """Extract claimed names, separate from the small bundled reference registry.
+def organization_role_mentions(text: str) -> list[dict]:
+    from app.scanners.organization_roles import extract_organization_roles
+    return extract_organization_roles(text,VERIFIED_ORGANIZATIONS_REGISTRY)
 
-    Unknown names need an explicit organization label or a distinctive business
-    heading. No filename, email-domain-to-company guess or OCR character repair.
-    """
-    candidates=[]
-    def add(start,end,method):
-        raw=text[start:end];value=re.sub(r'\s+',' ',raw).strip()
-        if len(value)<2:return
-        ref=next((o for o in VERIFIED_ORGANIZATIONS_REGISTRY.values() if value.casefold() in
-                  [o['canonical_name'].casefold(),*[a.casefold() for a in o['aliases']]]),None)
-        candidates.append({'canonical_name':ref['canonical_name'] if ref else value,
-            'start':start,'end':end,'excerpt':raw,'extraction_method':method,
-            'verification_status':'CLAIMED','reference':ref})
-    for m in re.finditer(r'(?im)^\s*(?:organization|organisation|company|employer|organized by|organisation name|company name)\s*:\s*([^\n.;]{2,150})',text):
-        add(m.start(1),m.end(1),'explicit_organization_label')
-    # Business suffix and a short standalone heading reduce slogan false positives.
-    for m in re.finditer(r'(?m)^[ \t]*([A-Z][A-Z0-9&.-]*(?:[ \t]+[A-Z][A-Z0-9&.-]*){0,4}[ \t]+(?:TECH|TECHNOLOGIES|SOLUTIONS|SYSTEMS|LABS|FOUNDATION|PVT[.]? LTD[.]?|LIMITED|INC[.]?))[ \t]*$',text):
-        if not re.search(r'\b(?:JOIN|APPLY|HIRING|INTERNSHIP|PROGRAM|WELCOME|OUR|YOUR)\b',m.group(1)):
-            add(m.start(1),m.end(1),'business_heading')
-    for org in VERIFIED_ORGANIZATIONS_REGISTRY.values():
-        matches=[m for alias in org['aliases'] for m in re.finditer(r'\b'+re.escape(alias)+r'\b',text,re.I)]
-        if matches:
-            m=min(matches,key=lambda x:x.start())
-            # Explicit company labels take precedence over unrelated brand mentions.
-            if not candidates:add(m.start(),m.end(),'bundled_name_reference')
+def organization_mentions(text: str) -> list[dict]:
+    """Compatibility contract: only primary organizer/employer claims, never partners."""
     unique={}
-    for c in candidates:unique.setdefault((c['start'],c['end']),c)
-    return sorted(unique.values(),key=lambda c:c['start'])
+    for m in organization_role_mentions(text):
+        if m['primary']:unique.setdefault(m['canonical_name'],m)
+    return list(unique.values())
 
 
 def identify_claimed_organization(text: str) -> Optional[Dict[str, Any]]:

@@ -3,7 +3,7 @@ export interface Citation {url?:string;source_id:string;source_title:string;sour
 export interface CaseClaim {id:string;source_id:string;claim_type:string;value:unknown;excerpt:string;location:{field:string;start:number;end:number;page?:number};extraction_method:string;verification_status:string}
 export interface CaseSource {id:string;title:string;input_type:string;filename?:string;submitted_content:string;extracted_text:string;processing_status:string;extraction_status:string;error_code?:string;error_message?:string;scan_id?:string;analysis:Investigation;metadata_json:Record<string,unknown>}
 export interface CaseFinding {id:string;kind:string;classification:string;severity:string;description:string;citations:Citation[]}
-export interface CaseDetail {notice_review?:NoticeReview;assessment?:Assessment;case_id:string;title:string;revision:number;status:string;fusion:Fusion;sources:CaseSource[];claims:CaseClaim[];cross_source_findings:CaseFinding[];evidence:EvidenceItem[];missing_information:string[];duplicate_sources:Record<string,string>;distinct_content_count:number;recommendations:Investigation['recommendations'];graph:Investigation['graph'];research:Investigation['research'];research_calls:number;last_action?:{action_id:string;status:string;message:string}}
+export interface CaseDetail {source_limits?:{url:number;pdf:number};notice_review?:NoticeReview;assessment?:Assessment;case_id:string;title:string;revision:number;status:string;fusion:Fusion;sources:CaseSource[];claims:CaseClaim[];cross_source_findings:CaseFinding[];evidence:EvidenceItem[];missing_information:string[];duplicate_sources:Record<string,string>;distinct_content_count:number;recommendations:Investigation['recommendations'];graph:Investigation['graph'];research:Investigation['research'];research_calls:number;last_action?:{action_id:string;status:string;message:string}}
 export interface CaseRevision {assessment?:Assessment;revision:number;event:string;created_at:string;fusion:Fusion}
 export interface CaseListItem {assessment?:Assessment;id:string;title:string;status:string;revision:number;fusion:Fusion;source_count:number;updated_at:string}
 async function request<T>(path:string,options:RequestInit={}):Promise<T>{
@@ -29,4 +29,14 @@ export function claimText(value:unknown):string {
   if(typeof value==='string')return value;
   if(value&&typeof value==='object')return Object.entries(value).filter(([,v])=>v!==null).map(([k,v])=>`${k}: ${v}`).join(' · ');
   return String(value);
+}
+
+export async function addCaseBatch(id:string,revision:number,sources:{input_type:string;content:string}[],files:File[]){
+ const form=new FormData();form.append('payload',JSON.stringify({expected_revision:revision,sources}));files.forEach(f=>form.append('files',f));
+ return request<CaseDetail>(`/${id}/sources/batch`,{method:'POST',body:form});
+}
+export const askCaseInvestigator=(id:string,question:string)=>request<{answer:string;evidence_referenced:string[];evidence_ids:string[];citations:Citation[];context_revision:number}>(`/${id}/investigate`,body({question}));
+export async function downloadCaseReport(id:string){
+ const r=await authenticatedFetch(`${API_BASE}/cases/${id}/report/pdf`);if(!r.ok)throw new Error('Case report could not be downloaded.');
+ const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download=`case-${id}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }

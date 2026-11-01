@@ -31,10 +31,16 @@ def extract_claims(source_id:str,text:str,input_type:str,submitted_content:str='
         result.append({'id':str(uuid5(NAMESPACE_URL,f'{source_id}:{kind}:{start}:{end}:{normalize(value)}')),
             'source_id':source_id,'claim_type':kind,'value':value,'normalized_value':normalize(value),
             'excerpt':excerpt,'location':location,'extraction_method':method,'verification_status':'CLAIMED'})
+    from app.scanners.org_scanner import organization_role_mentions
+    for role in organization_role_mentions(text):
+        add('organization_role',{'name':role['canonical_name'],'role':role['role'],'primary':role['primary']},role['start'],role['end'],role['extraction_method'])
+        if role['role']=='CLAIMED_COLLABORATOR':add('claimed_collaborator',role['display_name'],role['start'],role['end'],role['extraction_method'])
     for mention in organization_mentions(text):
         add('organization',mention['canonical_name'],mention['start'],mention['end'],mention['extraction_method'])
+    from app.services.program_claims import program_fields
+    for kind,value,start,end,method in program_fields(text):add(kind,value,start,end,method)
     for m in re.finditer(r'\b(internship|scholarship|job(?:\s+offer)?|employment)\b',text,re.I):
-        add('opportunity_type',m.group().lower().split()[0],m.start(),m.end())
+        if not any(c['claim_type']=='opportunity_type' for c in result):add('opportunity_type',m.group().lower().split()[0],m.start(),m.end())
         break
     for kind,pattern in [
         ('role',r'(?im)^\s*(?:role|position|job title|internship role)\s*:\s*([^\n.;]{2,150})'),
@@ -60,7 +66,7 @@ def extract_claims(source_id:str,text:str,input_type:str,submitted_content:str='
         add('duration',{'number':int(m.group(1)),'unit':m.group(2).lower().rstrip('s')},m.start(),m.end())
     for m in re.finditer(r'[\w.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+',text):
         prefix=text[max(0,m.start()-80):m.start()]
-        sender=bool(re.search(r'(?:from|sender|recruit(?:er|ment)\s+email)\s*:\s*(?:[^\n<]*<)?\s*$',prefix,re.I))
+        sender=bool(re.search(r'(?:from|sender(?:\s+email)?|recruit(?:er|ment)\s+email)\s*:\s*(?:[^\n<]*<)?\s*$',prefix,re.I))
         add('sender_email' if sender else 'contact_email',m.group().lower(),m.start(),m.end(),'email_parser')
     for m in re.finditer(r'https?://[^\s<>"\']+',text):
         value=m.group().rstrip(').,;')
@@ -83,4 +89,6 @@ def extract_claims(source_id:str,text:str,input_type:str,submitted_content:str='
         add('sensitive_data_request',{'item':item['label'],'tier':item['tier']},item['start'],item['end'],'sensitive_data_rule')
     for m in re.finditer(r'\b(?:no\s+(?:registration\s+|application\s+|training\s+)?fees?|never\s+charge\s+(?:candidates|applicants)|without\s+(?:any\s+)?fees?)\b',text,re.I):
         if not re.search(r'\b(?:for|except|SC|ST|PwBD|category|categories)\b',text[m.end():m.end()+90],re.I) and not re.search(r'\b(?:SC|ST|PwBD|ESM|EWS|OBC|General|UR)\b[^.\n]{0,50}$',text[max(0,m.start()-65):m.start()],re.I):add('fee_policy','NO_FEES',m.start(),m.end())
+    from app.services.fee_policy_scope import policy_rules
+    for value,start,end in policy_rules(result,text):add('fee_policy_rule',value,start,end,'category_stage_scope_parser')
     return result

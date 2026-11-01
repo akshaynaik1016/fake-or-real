@@ -30,6 +30,9 @@ class Settings(BaseModel):
     TAVILY_API_KEY: str = os.getenv("TAVILY_API_KEY", "")
     RESEARCH_TIMEOUT_SECONDS: float = float(os.getenv("RESEARCH_TIMEOUT_SECONDS", "8"))
     MAX_RESEARCH_CALLS: int = 3
+    CASE_MAX_URLS: int = int(os.getenv("CASE_MAX_URLS", "10"))
+    CASE_MAX_PDFS: int = int(os.getenv("CASE_MAX_PDFS", "10"))
+    OFFICIAL_NOTICE_FETCH_ENABLED: bool = os.getenv("OFFICIAL_NOTICE_FETCH_ENABLED", "false").lower() == "true"
     CASE_URL_FETCH_ENABLED: bool = os.getenv("CASE_URL_FETCH_ENABLED", "false").lower() == "true"
     NETWORK_SCANNERS_ENABLED: bool = os.getenv("NETWORK_SCANNERS_ENABLED", "false").lower() == "true"
     

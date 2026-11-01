@@ -12,6 +12,8 @@ from app.services.case_assessment import assess_case
 from app.security.redaction import redact_sensitive_credentials
 from app.core.config import settings
 
+from app.services.case_intake import enforce_source_limits
+
 MAX_SOURCES=25
 
 def owned_case(db,case_id,actor=None):
@@ -70,6 +72,7 @@ def create_case(db,title,actor):
 
 
 def begin_source(db,case,expected,input_type,title,submitted='',filename=None):
+    enforce_source_limits(db,case,[input_type])
     if db.query(InvestigationSource).filter_by(case_id=case.id,removed_at=None).count()>=MAX_SOURCES:raise HTTPException(422,'A case supports at most 25 active sources')
     source=InvestigationSource(case_id=case.id,input_type=input_type,title=(title or filename or input_type.title()+' source')[:200],
         submitted_content=redact_sensitive_credentials(submitted),filename=filename)

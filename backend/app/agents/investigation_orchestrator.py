@@ -62,6 +62,8 @@ def refresh_investigation(state: dict) -> dict:
                 "correlation_group": "external_research:" + (urlsplit(source["url"]).hostname or "unknown")})
     from app.services.notice_verification import compare_notice,notice_evidence,notice_action
     state['notice_review']=compare_notice(state.get('claims',[]),state['research'])
+    from app.services.program_claims import program_unknowns
+    state['notice_review']['unknowns']+=program_unknowns(state.get('claims',[]))
     retained=[e for e in state['evidence'] if e['category'] not in {'notice_corroboration','notice_contradiction','notice_possible_inconsistency','recruitment_policy_conflict'}]
     from app.services.recruitment_consistency import internal_policy_findings
     state["evidence"] = normalize_evidence(retained + external + notice_evidence(state['notice_review'])+internal_policy_findings(state.get('claims',[])))
@@ -81,6 +83,8 @@ def refresh_investigation(state: dict) -> dict:
     if action:state['recommendations'].insert(0,action)
     from app.services.recruitment_graph import enrich_recruitment_graph
     state['graph']=enrich_recruitment_graph(state['graph'],state.get('claims',[]),state['notice_review'],'submission')
+    from app.services.program_graph import enrich_program_graph
+    state['graph']=enrich_program_graph(state['graph'],state.get('claims',[]),'submission')
     state["status"] = "PARTIAL" if state["fusion"]["unknowns"] else "COMPLETED"
     from app.services.assessment_semantics import integrity_view
     return integrity_view(state)

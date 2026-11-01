@@ -66,11 +66,11 @@ export const DashboardPage: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 text-cyan-400 font-mono text-xs uppercase tracking-wider mb-1">
             <Activity className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <span>GLOBAL THREAT RADAR TELEMETRY</span>
+            <span>STORED INVESTIGATION OVERVIEW</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Trust & Safety Intelligence Dashboard</h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-1">
-            Real-time telemetry, threat distribution, and scam categorization across analyzed opportunities.
+            Stored scan assessments and community report counts. Reports and automated concerns do not establish confirmed incidents.
           </p>
         </div>
         <Link
@@ -92,7 +92,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-white">{stats.opportunities_checked}</p>
           <p className="text-[11px] text-emerald-400 mt-1 flex items-center space-x-1 font-mono">
-            <span>Recorded scans</span>
+            <span>Includes case-source and demo scans</span>
           </p>
         </div>
 
@@ -185,8 +185,8 @@ export const DashboardPage: React.FC = () => {
 
         {/* Scam Categories Bar Chart */}
         <div className="p-6 rounded-3xl glass-card border border-cyber-border">
-          <h3 className="font-extrabold text-white text-base mb-1">Top Scam Taxonomies</h3>
-          <p className="text-xs text-slate-400 mb-4">Most prevalent fraud schemes detected by the risk engine</p>
+          <h3 className="font-extrabold text-white text-base mb-1">Community report categories</h3>
+          <p className="text-xs text-slate-400 mb-4">Stored reports, not confirmed scams or scanner detections. Includes {data.data_scope?.synthetic_report_count??'unknown'} labelled synthetic demo records.</p>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={charts.category_distribution} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
@@ -196,7 +196,7 @@ export const DashboardPage: React.FC = () => {
                     <stop offset="100%" stopColor="#3b82f6" />
                   </linearGradient>
                 </defs>
-                <XAxis type="number" stroke="#64748b" fontSize={11} />
+                <XAxis type="number" allowDecimals={false} stroke="#64748b" fontSize={11} />
                 <YAxis type="category" dataKey="category" stroke="#94a3b8" fontSize={11} width={135} />
                 <Tooltip contentStyle={{ backgroundColor: '#0d1527', borderColor: '#1f2d4d', borderRadius: '12px', fontSize: '12px' }} />
                 <Bar dataKey="count" fill="url(#barGrad)" radius={[0, 8, 8, 0]} />
@@ -204,7 +204,7 @@ export const DashboardPage: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <p className="text-center text-[11px] text-slate-400 mt-4 font-mono">
-            Registration & laptop security fee demands represent 48% of total student scam incidents.
+            Each bar counts stored community reports. Synthetic demo records are included in the totals; no population incident rate is measured.
           </p>
         </div>
 

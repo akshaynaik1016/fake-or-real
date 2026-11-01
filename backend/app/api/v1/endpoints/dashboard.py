@@ -18,13 +18,15 @@ async def get_dashboard_metrics(db: Session = Depends(get_db), actor=Depends(cur
     from app.services.investigation_store import scan_response
     details=[await scan_response(db,s.id) for s in scans]
     counts = Counter(s['risk_level'] for s in details)
+    synthetic_reports=[r for r in reports if r.description.startswith('[Synthetic demo report]')]
+    report_counts=Counter(r.scam_category for r in reports);demo_counts=Counter(r.scam_category for r in synthetic_reports)
     days = [datetime.now(timezone.utc).date() - timedelta(days=i) for i in reversed(range(7))]
-    return {"stats": {"opportunities_checked": len(scans), "safe_count": 0,
+    return {"data_scope":{"scans":"Stored scans visible to this account, including case-source analyses and any demo scans; not unique authenticated opportunities.","reports":"Stored shared community report records; not confirmed incidents or scanner taxonomy counts.","synthetic_report_count":len(synthetic_reports),"submitted_report_count":len(reports)-len(synthetic_reports),"synthetic_scan_count":sum(bool(s.is_demo) for s in scans)},"stats": {"opportunities_checked": len(scans), "safe_count": 0,
         "needs_verification": counts["UNDETERMINED"], "high_risk": counts["ELEVATED CONCERN"],
         "critical_risk": 0, "reports_submitted": len(reports)},
         "charts": {"risk_distribution": [{"name": name, "value": counts[key], "color": color}
             for name, key, color in [("Undetermined", "UNDETERMINED", "#f59e0b"),("Elevated concern", "ELEVATED CONCERN", "#f43f5e")]],
-            "category_distribution": [{"category": k, "count": v} for k, v in Counter(r.scam_category for r in reports).items()],
+            "category_distribution": [{"category": k, "count": v,"synthetic_count":demo_counts[k],"submitted_count":v-demo_counts[k]} for k, v in report_counts.items()],
             "scans_over_time": [{"day": d.isoformat(), "scans": sum(s.created_at.date() == d for s in scans),
                 "threats": sum(s["created_at"].date()==d and s["risk_level"]=="ELEVATED CONCERN" for s in details)} for d in days]},
         "recent_scans": [{k:s[k] for k in ['id','target_identifier','input_type','trust_score','risk_level','assessment','created_at']} for s in details[:5]]}

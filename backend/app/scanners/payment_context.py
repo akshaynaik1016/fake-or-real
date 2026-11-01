@@ -100,6 +100,10 @@ def enrich_amounts(text,entities):
                 related_amount_spans=[span(text,base['start'],base['end'],'base_fee'),span(text,total['start'],total['end'],'tax_inclusive_total')])
     return entities
 
+def coercive_training_context(text,start,end):
+    a,b=sentence_bounds(text,start,end)
+    return bool(re.search(r'\b(?:pay|transfer|deposit|send)\b.{0,100}\b(?:now|immediately|within\s+\d+\s+(?:hours?|minutes?)|before\s+(?:the\s+)?(?:interview|joining|offer))\b',text[a:b],re.I|re.S))
+
 def payment_findings(text,entities):
     from app.scanners.payment_scanner import PAYMENT_PURPOSE_REGEX,UPI_HANDLE_REGEX,CRYPTO_REGEX,GIFT_CARD_REGEX,PAYMENT_LINK_REGEX,negated_payment_context,uncertain_payment_context
     payments=[e for e in entities if e['role']=='PAYMENT' and Decimal(e['value'])>0]
@@ -120,11 +124,12 @@ def payment_findings(text,entities):
         context=destination(text,e['start'],e['end']);app=e['category']=='APPLICATION_FEE'
         uncertain=uncertain_payment_context(text,e.get('label_start') if e.get('label_start') is not None else e['start'])
         external=context['outside_application_flow'] or context['channel']=='GIFT_CARD_OR_CRYPTO'
-        sev='critical' if external or (not app and not uncertain) else 'moderate'
+        disclosed_training=e['category']=='TRAINING_FEE' and not coercive_training_context(text,e['start'],e['end'])
+        sev='critical' if external or (not app and not disclosed_training and not uncertain) else 'moderate'
         key='payment:'+e['category']+':'+e.get('relation_group',e['currency']+':'+e['value'])+':'+str(context['recipient'])+':'+str(context['channel'])
         spans=[span(text,e['start'],e['end'],'payment_amount'),span(text,e['support_start'],e['support_end'],'payment_context'),*e.get('related_amount_spans',[]),*context['destination_spans']]
         if e.get('label_start') is not None:spans.append(span(text,e['label_start'],e['label_end'],'payment_label'))
-        message=('Application fee policy observed; amount/payment authorization remain unresolved: ' if app and not external else 'Payment request identified ('+e['category'].lower().replace('_',' ')+'): ')+e['raw']+'.'
+        message=('Training fee disclosed; authorization remains unresolved: ' if disclosed_training and not external else 'Application fee policy observed; amount/payment authorization remain unresolved: ' if app and not external else 'Payment request identified ('+e['category'].lower().replace('_',' ')+'): ')+e['raw']+'.'
         return key,{'code':'APPLICATION_FEE_UNRESOLVED' if app and not external else 'OUTSIDE_FLOW_PAYMENT' if external else 'UPFRONT_PAYMENT_REQUEST',
             'severity':sev,'message':message,'detail':e['classification_rationale']+' Recipient and channel are submitted claims, not proof of authorization. Verify this exact advertisement, fee and destination independently.',
             'observed_value':e['raw'],'source_spans':spans,'amounts':[e['raw']],
@@ -139,7 +144,8 @@ def payment_findings(text,entities):
         purposes.append(m)
         if any(e['support_start']<=m.start()<e['support_end'] for e in payments):continue
         app=bool(re.search(r'\b(?:application|exam)\b',m.group(),re.I)) or (m.group().lower() in {'fee','fees','deposit'} and bool(re.search(r'\bapplication\b|payment\s+gateway',text[a:b],re.I)))
-        category='APPLICATION_FEE' if app else 'UNPRICED_'+re.sub(r'\W+','_',m.group().upper())
+        training=bool(re.search(r'\btraining\b',m.group(),re.I))
+        category='APPLICATION_FEE' if app else 'TRAINING_FEE' if training else 'UNPRICED_'+re.sub(r'\W+','_',m.group().upper())
         ctx=destination(text,m.start(),m.end())
         # A repeated unpriced application-policy mention supports the single
         # priced policy only when recipient/channel are compatible and unique.
@@ -147,12 +153,27 @@ def payment_findings(text,entities):
             (not ctx['recipient'] or ctx['recipient']==f['payment_context']['recipient']) and ctx['outside_application_flow']==f['payment_context']['outside_application_flow']]
         if len(compatible)==1:
             flag={**groups[compatible[0]],'source_spans':[span(text,m.start(),m.end(),'payment_label')],'amounts':[]};add(compatible[0],flag);continue
-        sev='critical' if ctx['outside_application_flow'] else 'moderate' if app or uncertain_payment_context(text,m.start()) else 'critical'
+        disclosed_training=training and not coercive_training_context(text,m.start(),m.end())
+        sev='critical' if ctx['outside_application_flow'] or ctx['channel']=='GIFT_CARD_OR_CRYPTO' else 'moderate' if app or disclosed_training or uncertain_payment_context(text,m.start()) else 'critical'
         key='payment:'+category+':unpriced:'+str(ctx['recipient'])+':'+str(ctx['channel'])
         add(key,{'code':'APPLICATION_FEE_UNRESOLVED' if app else 'UNPRICED_PAYMENT_REQUEST','severity':sev,
-            'message':f"{'Application fee policy' if app else 'Payment requirement'} mentioned ({m.group()}); amount not unambiguously linked.",
+            'message':f"{'Disclosed training fee' if disclosed_training else 'Application fee policy' if app else 'Payment requirement'} mentioned ({m.group()}); amount not unambiguously linked.",
             'detail':'No amount is inferred. Payment purpose, recipient and authorization remain unresolved.','observed_value':m.group(),
             'source_spans':[span(text,m.start(),m.end(),'payment_label')],'payment_context':ctx,'amounts':[]})
+    # An explicit personal-account payment instruction can be a separate clause
+    # from a fee disclosure. Preserve it without borrowing an unrelated amount.
+    for m in re.finditer(r'\b(?:pay|transfer|deposit|send\s+money)\b',text,re.I):
+        if negated_payment_context(text,m.start()):continue
+        ctx=destination(text,m.start(),m.end())
+        if not ctx['outside_application_flow']:continue
+        if any(any(s['start']<=m.start()<s['end'] for s in f['source_spans']) for f in groups.values()):continue
+        key='payment:PERSONAL_ACCOUNT_DEMAND:unpriced:'+str(ctx['recipient'])+':'+str(ctx['channel'])
+        add(key,{'code':'PERSONAL_ACCOUNT_PAYMENT_DEMAND','severity':'moderate' if uncertain_payment_context(text,m.start()) else 'critical',
+            'message':'Payment instruction to a personal account observed; amount is unspecified.',
+            'detail':'The submitted instruction names a personal account or bypasses an application flow. No amount or account authorization is inferred.',
+            'observed_value':text[ctx['scope_start']:ctx['scope_end']],
+            'source_spans':[span(text,ctx['scope_start'],ctx['scope_end'],'payment_context')],
+            'payment_context':ctx,'amounts':[]})
     methods=[]
     for pattern,method in [(UPI_HANDLE_REGEX,'UPI'),(CRYPTO_REGEX,'Cryptocurrency'),(GIFT_CARD_REGEX,'Gift Cards'),(PAYMENT_LINK_REGEX,'Payment Link')]:
         for match in re.finditer(pattern,text,re.I):

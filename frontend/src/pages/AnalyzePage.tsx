@@ -23,11 +23,15 @@ import {
   Clipboard,
   X
 } from 'lucide-react';
+import {CaseIntake} from '../components/cases/CaseIntake';
+import type {CaseDetail} from '../api/cases';
 import { ScreenshotReview } from '../components/common/ScreenshotReview';
 import { submitReviewedScreenshot, type ReviewedScreenshot, submitAnalyze, submitFileUpload, ScanDetail } from '../api/client';
 
 export const AnalyzePage: React.FC = () => {
   const navigate = useNavigate();
+  const [multi,setMulti]=useState(false),[multiBusy,setMultiBusy]=useState(false),[multiError,setMultiError]=useState('');
+  const runMulti=async(operation:()=>Promise<CaseDetail>)=>{setMultiBusy(true);setMultiError('');try{const result=await operation();navigate(`/cases/${result.case_id}`);return result;}catch(e){setMultiError(e instanceof Error?e.message:'Evidence processing failed');}finally{setMultiBusy(false);}};
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'url';
 
@@ -208,7 +212,7 @@ export const AnalyzePage: React.FC = () => {
         </h1>
         <p className="text-sm text-slate-300 mt-2 max-w-xl mx-auto leading-relaxed">
           Submit any URL, screenshot, offer letter, or message. Our multi-layer forensic engine
-          verifies identity, domain infrastructure, and risk signals before you take action.
+          inspects submitted claims, available domain evidence and risk signals before you take action.
         </p>
 
         {/* Quick Demo Presets */}
@@ -241,6 +245,12 @@ export const AnalyzePage: React.FC = () => {
         </div>
       </div>
 
+      <section className="glass-card rounded-2xl p-5 space-y-3" aria-label="Multi-source investigation">
+        <h2 className="font-bold text-lg">Investigate one opportunity with multiple sources</h2><p className="text-sm text-slate-400">Combine optional text, links, PDFs and up to five screenshots in the existing Cases workspace. Single-format scans remain below.</p>
+        <button onClick={()=>setMulti(v=>!v)} disabled={multiBusy} className="bg-cyan-300 text-slate-950 rounded-lg px-4 py-2 text-sm font-bold">{multi?'Hide multi-source inputs':'Add multiple sources'}</button>
+        {multiError&&<p role="alert" className="text-rose-300 text-sm">{multiError}</p>}
+        {multi&&<CaseIntake busy={multiBusy} onSubmit={runMulti} onCancel={()=>setMulti(false)}/>}
+      </section>
       {/* Main Scanner Container */}
       <div className="glass-card rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden border border-cyber-border">
         

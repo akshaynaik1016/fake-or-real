@@ -181,7 +181,7 @@ export interface ResearchSource {
 }
 export interface Assessment {state:string;label:string;verification_status:string;offer_authenticity:string;risk_score:number|null;verified_claims:{claim_id:string;evidence_id:string;scope:string}[];explanation:string}
 export interface StructuredClaim {id:string;source_id:string;claim_type:string;value:unknown;excerpt:string;location:{field:string;start:number;end:number;page?:number};extraction_method:string;verification_status:string}
-export interface NoticeReview {claim_results:{id:string;claim_id:string;claim_type:string;value:unknown;status:string;scope:string;reason:string;citations:GraphCitation[]}[];unknowns:string[];independent_documents:{id:string;title:string;url:string;retrieved_at:string}[];offer_authenticity?:string}
+export interface NoticeReview {manual_verification?:{official_domains:string[];authority_reason:string;fields:{claim_type:string;value:unknown;source_id:string;excerpt:string}[]};claim_results:{id:string;claim_id:string;claim_type:string;value:unknown;status:string;scope:string;reason:string;citations:GraphCitation[]}[];unknowns:string[];independent_documents:{id:string;title:string;url:string;retrieved_at:string}[];offer_authenticity?:string}
 export interface Investigation {
   notice_review?:NoticeReview;
   assessment?:Assessment;claims?:StructuredClaim[];source_id?:string;

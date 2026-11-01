@@ -73,4 +73,6 @@ def recruitment_fields(text):
         prefix=text[max(0,m.start()-600):m.start()]
         if re.search(r'\b(?:pay\s+application\s+fee|application\s+fee\s*[?])',prefix,re.I):
             add('fee_applicability',{'categories':[m.group(1)],'policy':'PAYMENT_REQUIRED'},m.start(),m.end(),'scoped_fee_faq_row')
+    for m in re.finditer(r'\b((?:GEN|General|UR|EWS|OBC|SC|ST|PwBD|ESM)(?:\s*[/,&]\s*(?:GEN|General|UR|EWS|OBC|SC|ST|PwBD|ESM))*)\s+candidates\s+(?:must|are required to)\s+pay\s+(?:an?\s+)?application\s+fee',text,re.I):
+        add('fee_applicability',{'categories':re.findall(r'\b(?:GEN|General|UR|EWS|OBC|SC|ST|PwBD|ESM)\b',m.group(1),re.I),'policy':'PAYMENT_REQUIRED'},m.start(),m.end(),'observed_category_fee_rule')
     return fields

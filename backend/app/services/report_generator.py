@@ -98,6 +98,15 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
     story.append(Spacer(1, 15))
     
     investigation = scan_data.get("investigation") or {}
+    from app.services.program_claims import claim_display
+    identity_claims=[c for c in investigation.get('claims',[]) if c['claim_type'] in {'organization','organization_role','claimed_collaborator','opportunity_type','duration_range','certificate_association','placement_promise','fee_policy_disclosure'}]
+    if identity_claims:
+        story.append(Paragraph('SUBMITTED ORGANIZATION AND PROGRAM CLAIMS',styles['Heading3']))
+        for claim in identity_claims:
+            loc=claim['location']
+            story.append(Paragraph(escape(claim['claim_type'].replace('_',' ')+': '+claim_display(claim['value'])),body_style))
+            story.append(Paragraph(escape(f"Submitted, not independently verified | source {claim['source_id']} | page {loc.get('page','unavailable')} | characters {loc['start']}-{loc['end']} | {claim['excerpt']}"),body_style))
+        story.append(Spacer(1,12))
     fusion = investigation.get("fusion") or {}
     story.append(Paragraph("<b>EVIDENCE FUSION — " + escape(fusion.get("assessment_mode", "UNAVAILABLE")) + "</b>", styles['Heading3']))
     for line in [f"Risk: {fusion.get('risk_level', 'UNKNOWN')} | Risk score: {fusion.get('risk_score')} | Evidence confidence: {fusion.get('confidence', 0)} | Coverage: {fusion.get('evidence_coverage', 0)}%",
@@ -108,6 +117,11 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
         for source in result.get("sources", []):
             story.append(Paragraph(escape(source["title"] + " | " + source["url"] + " | " + source["verification_status"]), body_style))
     story.append(Spacer(1, 15))
+    # Additive case export: stored source statuses, claims and exact citations.
+    for heading,lines in scan_data.get('case_sections',[]):
+        story.append(Paragraph(escape(heading),styles['Heading3']))
+        for line in lines:story.append(Paragraph(escape(str(line)),body_style))
+        story.append(Spacer(1,6))
     # Verification Checklist Table
     story.append(Paragraph("<b>VERIFICATION CHECKLIST (9-POINT AUDIT)</b>", styles['Heading3']))
     checklist_data = [

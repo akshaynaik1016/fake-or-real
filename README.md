@@ -1,3 +1,29 @@
+# Latest organization-role and multi-input fixes — 1 November 2026
+
+Primary organizer extraction now distinguishes claimed collaborators and certificate
+associations. Disclosed training fees remain unresolved without automatic critical
+risk; explicit personal-account/coercive demands retain warnings. Analyze reuses
+Cases batch intake for optional mixed sources while keeping single-format tabs.
+TrustGraph has measured/resize fitting and a readable program overview. Dashboard
+categories are explicitly labelled stored community reports including synthetic demos.
+
+**350 backend tests, 18 frontend tests and the production build passed.** No model,
+dependency, migration, commit or push was added. Checkpoint tag is unchanged. See
+CRITICAL_MULTI_INPUT_REPORT.md for the before/after Corizo result, root causes,
+A–O test coverage, preservation checklist, manual walkthrough and limitations.
+Earlier test counts below describe earlier versions. Re-submit old scans for new results.
+
+# Latest reliable-workspace validation — 1 November 2026
+
+Existing Cases now supports batch optional evidence intake, maximum five screenshots,
+canonical scan/case Investigator context, contextual fee-policy scope, compact expandable
+React Flow and unified case PDF reports. Official-only exact-notice fetching has a
+separate opt-in; absent providers stay unresolved. No model or new migration is needed.
+**325 backend tests and 15 frontend tests passed; TypeScript/Vite build passed.**
+See RELIABLE_WORKSPACE_REPORT.md for the feature-preservation checklist, run commands,
+synthetic demo, exact files and limitations. `hackathon-working-v1` is unchanged;
+no commit or push was made. Earlier validation counts below are historical.
+
 # FAKE OR REAL — evidence-based investigation
 
 Current accuracy/integrity update: **241 backend tests**, **9 frontend tests**, and

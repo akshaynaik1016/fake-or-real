@@ -207,6 +207,8 @@ class AIChatResponse(BaseModel):
     provider: str = "deterministic"
     mode: str = "FALLBACK"
     evidence_ids: List[str] = Field(default_factory=list)
+    citations: List[Dict[str, Any]] = Field(default_factory=list)
+    context_revision: Optional[int] = None
 
 
 # ----------------- Comparison Schemas -----------------

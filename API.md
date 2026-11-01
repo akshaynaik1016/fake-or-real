@@ -149,3 +149,36 @@ redacted text. Monetary entities add purpose/role, nearby supporting text, ratio
 recipient/channel (when explicit) and stated base/GST-total relationships. Repetition
 is grouped while source references remain available. No new migration is required.
 See CONTEXT_AWARE_VERIFICATION_REPORT.md for validation and comparison limits.
+
+
+## Reliable Cases extension
+
+Existing routes remain. Additive owned routes: multipart POST
+`/cases/{id}/sources/batch` with `payload={expected_revision,sources:[]}` plus optional
+repeated `files`; POST `/cases/{id}/investigate` with `{question}`; GET
+`/cases/{id}/report/pdf`. Batch intake requires at least one source, skips absent
+source types and retains per-source failures. Files await text review. Active images
+are limited to five through both old and new intake routes. URL/PDF limits default
+to ten each (`CASE_MAX_URLS`, `CASE_MAX_PDFS`); total sources remain capped at 25.
+
+Chat uses the canonical stored snapshot and adds citations/context_revision. Fee
+claims add structured fee_policy_rule records; source_limits and manual comparison
+metadata are additive. OFFICIAL_NOTICE_FETCH_ENABLED is a separate default-off
+trusted-host retrieval switch; arbitrary CASE_URL_FETCH_ENABLED is not enabled by it.
+No migration or breaking route change was added. See RELIABLE_WORKSPACE_REPORT.md.
+
+
+## Organization-role accuracy and dashboard scope
+
+Existing routes/keys remain. Structured claims add `organization_role`,
+`claimed_collaborator`, `duration_range`, `certificate_association`, `placement_promise`
+and `fee_policy_disclosure`. Organization claims represent the primary organizer/
+employer, not incidental partner names. Each new claim retains source ID, exact
+excerpt, location, method and CLAIMED status. Unpriced training disclosures never
+invent an amount or authorization.
+
+Dashboard adds `data_scope` and per-category `synthetic_count`/`submitted_count`.
+`category_distribution.count` still counts stored community report records, including
+labelled synthetic demos; it does not count confirmed incidents or scan detections.
+Analyze's combined form uses existing case creation/batch/review/report endpoints;
+no new case system, endpoint or migration was added in this phase.

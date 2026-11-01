@@ -153,7 +153,9 @@ async def execute_full_scan(
             
     org_verification = None
     if claimed_org and primary_domain:
-        org_verification = verify_organization_domain_match(claimed_org, primary_domain)
+        from app.scanners.org_scanner import organization_role_mentions
+        partner_link=any(r['role']=='CLAIMED_COLLABORATOR' and r.get('reference') and any(primary_domain==d or primary_domain.endswith('.'+d) for d in r['reference']['official_domains'] if '/' not in d) for r in organization_role_mentions(content))
+        org_verification = ({'mismatch':False,'verified':False,'explanation':'The submitted link matches a claimed collaborator reference, not established primary-organizer ownership. The organizer/domain relationship remains unresolved.'} if partner_link else verify_organization_domain_match(claimed_org, primary_domain))
         log_timeline("Organization Verification", "passed" if org_verification["verified"] else ("critical" if org_verification["mismatch"] else "warning"), org_verification["explanation"])
         if org_verification["mismatch"]:
             evidence_list.append({

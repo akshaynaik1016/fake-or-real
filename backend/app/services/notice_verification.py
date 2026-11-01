@@ -32,7 +32,7 @@ def notice_action(claims,calls,history=(),research=()):
     if not target:return None
     reference=organization_reference(target['organization']) or {}
     reason='Match this advertisement number, organization and position against a full independently retrieved notice, then compare dates, vacancies, fee and destination.'
-    unavailable='No trusted organization website reference is available.' if not reference.get('official_domains') else 'TAVILY_API_KEY is not configured.' if not settings.TAVILY_API_KEY else 'Public document retrieval is disabled (CASE_URL_FETCH_ENABLED=false).' if not settings.CASE_URL_FETCH_ENABLED else 'Research budget exhausted.' if calls>=settings.MAX_RESEARCH_CALLS else None
+    unavailable='No trusted organization website reference is available.' if not reference.get('official_domains') else 'TAVILY_API_KEY is not configured.' if not settings.TAVILY_API_KEY else 'Official document retrieval is disabled. Enable OFFICIAL_NOTICE_FETCH_ENABLED for bounded trusted-host checks, or compare the fields manually.' if not (settings.CASE_URL_FETCH_ENABLED or settings.OFFICIAL_NOTICE_FETCH_ENABLED) else 'Research budget exhausted.' if calls>=settings.MAX_RESEARCH_CALLS else None
     signature=normalize(target)
     completed=any(r.get('notice_verification') and r.get('target_signature')==signature and r.get('status')=='COMPLETED' for r in research)
     return {'action_id':'verify_notice','title':'Verify this exact recruitment advertisement','reason':reason,'priority':'HIGH','ranking_score':105,
@@ -49,7 +49,7 @@ async def retrieve_notice(claims):
     if not target:return {'status':'SEARCH_UNAVAILABLE','reason':'Exact notice identifiers are missing or ambiguous.','sources':[],'independent_documents':[],'notice_verification':True}
     reference=organization_reference(target['organization']) or {};domains=reference.get('official_domains',[])
     common={'notice_verification':True,'target_signature':normalize(target),'organization':target['organization'],'independent_documents':[]}
-    if not settings.CASE_URL_FETCH_ENABLED or not domains:
+    if not (settings.CASE_URL_FETCH_ENABLED or settings.OFFICIAL_NOTICE_FETCH_ENABLED) or not domains:
         return {**common,'status':'SEARCH_UNAVAILABLE','reason':'Bounded retrieval or trusted domain reference unavailable; exact claims remain unresolved.','sources':[]}
     query=f'"{target["advertisement_number"]}" {target["organization"]} {target["job_title"]}'[:250]
     search=await TavilyService().search(query,domains)
@@ -129,7 +129,7 @@ def compare_notice(claims,research):
             'reason':'The same exact advertisement on an independently retrieved official-host document states a different value.' if contradicted else 'The stated value matches an independently retrieved exact-notice document.' if corroborated else 'An independently retrieved exact notice states a different fee; category, exemptions or tax basis are not sufficiently comparable to assert a verified contradiction.' if possible else 'No complete independently retrieved exact-notice source supports or contradicts this specific claim.'})
     if not documents:reasons.append('No full official-host document uniquely matching this exact advertisement was independently retrieved. General search context does not verify it.')
     return {'target':target,'claim_results':results,'independent_documents':documents,'unknowns':list(dict.fromkeys(reasons)),
-        'offer_authenticity':'UNRESOLVED'}
+        'offer_authenticity':'UNRESOLVED','manual_verification':{'official_domains':domains,'authority_reason':reference.get('reference_url') or 'Bundled organization domain reference; does not authenticate the notice.','fields':[{'claim_type':c['claim_type'],'value':c['value'],'source_id':c['source_id'],'excerpt':c['excerpt']} for c in claims if c['claim_type'] in NOTICE_FIELDS]}}
 
 def notice_evidence(review):
     grouped={}

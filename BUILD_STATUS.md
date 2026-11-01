@@ -1,3 +1,42 @@
+# Current critical accuracy/multi-input validation — 1 November 2026
+
+Baseline: 325 backend tests, 15 frontend tests, production build passed.
+Final: **350 backend tests passed (0 failed/skipped), 18 frontend tests passed,
+TypeScript/Vite production build passed**. Original BEL binary regression enabled.
+Existing 45 synthetic benchmark scenarios passed; not real-world accuracy.
+
+The supplied Corizo reconstruction selects Corizo, not Microsoft; training fee is
+unpriced/moderate, checklist has zero failures, offer/partnership verification remains
+unresolved. Analyze-to-Cases combined text/URL, case chat/report, graph visibility,
+all-record expansion, resize and dashboard source labels were browser/API checked.
+No security protection, existing feature or old assertion was removed. No LLM,
+dependency, migration, commit or push; hackathon-working-v1 is unchanged.
+See CRITICAL_MULTI_INPUT_REPORT.md for exact test boundaries and remaining limitations.
+
+Earlier records are historical.
+
+---
+
+# Reliable workspace validation — 1 November 2026
+
+Baseline: 297 backend / 12 frontend tests and production build passed. Final:
+**325 backend / 15 frontend tests passed, 0 failures**, production build passed.
+The original BEL PDF regression was enabled. Existing 45-scenario synthetic benchmark
+passed; this is development regression coverage, not real-world accuracy.
+Browser/API validation covered one case with URL, PDF, message and three screenshots,
+native OCR, partial URL availability, canonical chat, compact graph expansion,
+subsequent PDF selection/upload/review/removal and a 390px responsive smoke check.
+
+No feature was removed, no old test was weakened, no dependency/migration/LLM was
+added and no Git commit/push was made. Tag hackathon-working-v1 remains at
+b738fe0a00ba121defcf8693af7081f0811f1965. Live external providers, installed extension,
+all historical UI flows and production deployment were not tested. See
+RELIABLE_WORKSPACE_REPORT.md for the preservation checklist and exact test boundaries.
+
+Earlier records follow as historical context.
+
+---
+
 # Current context-aware recruitment validation — 1 November 2026
 
 **297 backend tests passed, 0 failed, 0 skipped**, with the exact original BEL PDF

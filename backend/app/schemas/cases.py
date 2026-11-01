@@ -1,6 +1,9 @@
 from typing import Literal
 from pydantic import BaseModel,Field
 
+class CaseQuestion(BaseModel):
+    question:str=Field(min_length=1,max_length=2000)
+
 class CaseCreate(BaseModel):
     title:str=Field(min_length=3,max_length=200)
 

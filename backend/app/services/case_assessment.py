@@ -92,6 +92,8 @@ def assess_case(case,sources,claims):
             'claim_type':finding['kind'],'extraction_method':'deterministic_claim_comparison','provenance_kind':'RULE_OUTPUT','original_excerpt':None,'extracted_value':[c['excerpt'] for c in finding['citations']],'related_entities':[]})
     from app.services.notice_verification import compare_notice,notice_evidence,notice_action
     notice_review=compare_notice(claims,case.research_results)
+    from app.services.program_claims import program_unknowns
+    notice_review['unknowns']+=program_unknowns(claims)
     evidence.extend(notice_evidence(notice_review))
     fusion=fuse_evidence(evidence,checks)
     strong_concern=any(e['severity'] in {'high','critical'} and e.get('origin') not in {'SYNTHETIC','EXTERNAL_SOURCE','AI_INTERPRETATION'} and e.get('verification_status') not in {'UNKNOWN','UNAVAILABLE','SYNTHETIC'} for e in evidence)
@@ -128,9 +130,11 @@ def assess_case(case,sources,claims):
     status='NEEDS_EVIDENCE' if not sources else 'NEEDS_REVIEW' if any(s['processing_status']=='NEEDS_REVIEW' for s in sources) else 'PARTIAL' if unknowns or fusion['unknowns'] else 'ACTIVE'
     from app.services.recruitment_graph import enrich_recruitment_graph
     from app.services.assessment_semantics import assessment_for
-    return {'notice_review':notice_review,'assessment':assessment_for(fusion,evidence,claims),'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
+    from app.services.program_graph import enrich_program_graph
+    graph=enrich_program_graph(enrich_recruitment_graph(case_graph(case.id,case.title,source_map,claims,findings,evidence,case.research_results),claims,notice_review,case.id),claims,case.id)
+    return {'source_limits':{'url':max(1,settings.CASE_MAX_URLS),'pdf':max(1,settings.CASE_MAX_PDFS)},'notice_review':notice_review,'assessment':assessment_for(fusion,evidence,claims),'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
         'claims':claims,'cross_source_findings':findings,'evidence':evidence,'missing_information':unknowns,
         'duplicate_sources':duplicates,'distinct_content_count':len([s for s in canonical if s['processing_status']=='READY']),
         'recommendations':sorted(recommendations,key=lambda a:-a.get('ranking_score',0)),
         'research':case.research_results,'research_calls':case.research_calls,
-        'graph':enrich_recruitment_graph(case_graph(case.id,case.title,source_map,claims,findings,evidence,case.research_results),claims,notice_review,case.id)}
+        'graph':graph}

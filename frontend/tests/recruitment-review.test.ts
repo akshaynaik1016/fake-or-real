@@ -16,3 +16,10 @@ test('notice has a real non-overlapping layout position',()=>{
  assert.equal(graph.find(n=>n.id==='notice')!.position.x,0);
  assert.equal(new Set(graph.map(n=>`${n.position.x},${n.position.y}`)).size,4);
 });
+
+test('program descriptions distinguish roles, unknown fees and assistance promises',()=>{
+ assert.match(claimValue({name:'Organizer',role:'PRIMARY_ORGANIZER',primary:true}),/primary organizer/);
+ assert.match(claimValue({category:'TRAINING_FEE',applies:true,amount:null}),/amount unspecified/);
+ assert.match(claimValue({minimum:2,maximum:3,unit:'month'}),/2–3 months/);
+ assert.match(claimValue({wording:'Placement Assistance (100% Guarantee)',scope:'PLACEMENT_ASSISTANCE',job_guaranteed:null}),/guaranteed job placement not established/);
+});
