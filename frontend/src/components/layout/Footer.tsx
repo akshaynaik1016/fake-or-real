@@ -15,7 +15,7 @@ export const Footer: React.FC = () => {
             <div>
               <p className="font-semibold text-slate-200 text-sm">Responsible AI & Verification Principle</p>
               <p className="text-slate-400 mt-0.5 leading-relaxed">
-                FAKE OR REAL does not make unsupported accusations. Automated assessments evaluate observable cybersecurity signals,
+                UNMASK does not make unsupported accusations. Automated assessments evaluate observable cybersecurity signals,
                 identity cross-checks, and language patterns to help you verify opportunities before you click or pay.
               </p>
             </div>
@@ -33,7 +33,7 @@ export const Footer: React.FC = () => {
           <div>
             <div className="flex items-center space-x-2 text-white font-bold mb-3">
               <ShieldCheck className="w-4 h-4 text-cyber-cyan" />
-              <span>FAKE OR REAL</span>
+              <span>UNMASK</span>
             </div>
             <p className="text-slate-400 leading-relaxed mb-3">
               Evidence-based digital trust & safety platform protecting students and job seekers against online scams.
@@ -74,7 +74,7 @@ export const Footer: React.FC = () => {
 
         {/* Bottom copyright */}
         <div className="pt-6 border-t border-cyber-border/60 flex flex-col sm:flex-row items-center justify-between text-slate-400">
-          <p>© 2026 FAKE OR REAL. Built for Safety Tech Hackathon. All rights reserved.</p>
+          <p>© 2026 UNMASK. Built for Safety Tech Hackathon. All rights reserved.</p>
           <p className="mt-2 sm:mt-0 font-mono text-[11px] text-slate-400">
             Isolated Sandbox • SSRF Guard • Prompt Injection Protected
           </p>

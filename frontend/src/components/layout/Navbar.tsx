@@ -43,7 +43,7 @@ export const Navbar: React.FC = () => {
           <div className="flex flex-col justify-center">
             <div className="flex items-center space-x-2">
               <span className="font-black tracking-wider text-base sm:text-lg bg-gradient-to-r from-white via-slate-100 to-cyber-cyan bg-clip-text text-transparent whitespace-nowrap leading-tight">
-                FAKE OR REAL
+                UNMASK
               </span>
               <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-cyber-cyan/15 text-cyber-cyan border border-cyber-cyan/30 whitespace-nowrap leading-none font-semibold">
                 v1.0

@@ -9,7 +9,7 @@ export const AboutPage: React.FC = () => {
         <div className="inline-flex p-3 rounded-2xl bg-cyber-cyan/10 border border-cyber-cyan/40 text-cyber-cyan mb-2">
           <Info className="w-8 h-8" />
         </div>
-        <h1 className="text-3xl font-extrabold text-white">About FAKE OR REAL</h1>
+        <h1 className="text-3xl font-extrabold text-white">About UNMASK</h1>
         <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto font-mono">
           Evidence-Based Digital Trust & Safety Platform • Track: Safety Tech
         </p>

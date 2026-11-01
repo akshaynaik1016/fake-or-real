@@ -74,7 +74,7 @@ export const LandingPage: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-5xl sm:text-7xl font-black tracking-tight text-white max-w-4xl mx-auto leading-tight"
         >
-          FAKE OR REAL
+          UNMASK
           <span className="block mt-2 text-3xl sm:text-5xl bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent font-black tracking-normal">
             Don't trust. Verify.
           </span>
@@ -300,7 +300,7 @@ export const LandingPage: React.FC = () => {
             Built Specifically For Student & Job Seeker Safety
           </h2>
           <p className="text-sm text-slate-400 mt-2 max-w-2xl mx-auto">
-            Traditional antivirus programs scan for malware. FAKE OR REAL investigates social engineering,
+            Traditional antivirus programs scan for malware. UNMASK investigates social engineering,
             fake recruiters, advance-fee scams, and brand impersonation.
           </p>
         </div>

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseModel):
-    PROJECT_NAME: str = "FAKE OR REAL - Evidence-Based Digital Trust & Safety Platform"
+    PROJECT_NAME: str = "UNMASK - Evidence-Based Digital Trust & Safety Platform"
     TAGLINE: str = "Don't trust. Verify."
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"

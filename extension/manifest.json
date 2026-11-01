@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "FAKE OR REAL — Trust & Safety Guard",
+  "name": "UNMASK — Trust & Safety Guard",
   "version": "1.0.0",
   "description": "Evidence-based digital trust and safety scanner. Verify opportunities, domains, recruiters, and websites before you click or pay.",
   "permissions": [
@@ -14,7 +14,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "FAKE OR REAL Guard",
+    "default_title": "UNMASK Guard",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

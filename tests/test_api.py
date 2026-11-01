@@ -20,7 +20,7 @@ def test_root_endpoint():
     assert res.status_code == 200
     data = res.json()
     assert data["status"] == "OPERATIONAL"
-    assert "FAKE OR REAL" in data["platform"]
+    assert "UNMASK" in data["platform"]
     assert data["tagline"] == "Don't trust. Verify."
 
 def test_health_and_readiness_endpoints():

@@ -26,7 +26,7 @@ export const LoginPage: React.FC = () => {
           <div className="inline-flex p-3 rounded-2xl bg-cyber-cyan/10 border border-cyber-cyan/30 text-cyber-cyan mb-1">
             <ShieldCheck className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-extrabold text-white">Sign In to FAKE OR REAL</h1>
+          <h1 className="text-2xl font-extrabold text-white">Sign In to UNMASK</h1>
           <p className="text-xs text-slate-400">Enter your credentials to access saved audit reports and dashboard</p>
         </div>
 

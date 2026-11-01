@@ -109,7 +109,7 @@ export const ExtensionPage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-cyber-border">
               <div className="flex items-center space-x-2">
                 <ShieldCheck className="w-5 h-5 text-cyber-cyan" />
-                <span className="font-extrabold text-xs text-white">FAKE OR REAL</span>
+                <span className="font-extrabold text-xs text-white">UNMASK</span>
               </div>
               <span className="text-[10px] font-mono text-cyber-cyan">Browser Shield</span>
             </div>

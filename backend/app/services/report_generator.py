@@ -64,7 +64,7 @@ def generate_pdf_report(scan_data: Dict[str, Any]) -> bytes:
     story = []
     
     # Header & Branding
-    story.append(Paragraph("FAKE OR REAL — DIGITAL TRUST & SAFETY AUDIT REPORT", title_style))
+    story.append(Paragraph("UNMASK — DIGITAL TRUST & SAFETY AUDIT REPORT", title_style))
     story.append(Paragraph("Don't trust. Verify. | Evidence-Based Opportunity Assessment", subtitle_style))
     story.append(Spacer(1, 15))
     

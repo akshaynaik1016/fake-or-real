@@ -48,7 +48,7 @@
           WARNING: MULTIPLE RISK INDICATORS DETECTED
         </div>
         <div style="font-size: 13px; color: #94a3b8; margin-bottom: 16px;">
-          FAKE OR REAL — Evidence-Based Digital Trust & Safety Guard
+          UNMASK — Evidence-Based Digital Trust & Safety Guard
         </div>
 
         <div style="background: #070b14; border: 1px solid #1f2d4d; border-radius: 8px; padding: 12px; margin-bottom: 18px; display: flex; justify-content: space-around; align-items: center;">

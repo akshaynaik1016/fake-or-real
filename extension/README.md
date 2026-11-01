@@ -1,4 +1,4 @@
-# FAKE OR REAL — Chrome / Edge Extension
+# UNMASK — Chrome / Edge Extension
 
 Evidence-Based Digital Trust & Safety Guard for browser navigation.
 
@@ -17,4 +17,4 @@ Evidence-Based Digital Trust & Safety Guard for browser navigation.
 3. Enable **Developer mode** (toggle in top right).
 4. Click **Load unpacked**.
 5. Select the `c:\p1test\extension` folder.
-6. The FAKE OR REAL shield badge will now appear in your browser toolbar!
+6. The UNMASK shield badge will now appear in your browser toolbar!

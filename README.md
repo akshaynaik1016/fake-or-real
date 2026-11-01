@@ -41,7 +41,7 @@ See RELIABLE_WORKSPACE_REPORT.md for the feature-preservation checklist, run com
 synthetic demo, exact files and limitations. `hackathon-working-v1` is unchanged;
 no commit or push was made. Earlier validation counts below are historical.
 
-# FAKE OR REAL — evidence-based investigation
+# UNMASK — evidence-based investigation
 
 Current accuracy/integrity update: **241 backend tests**, **9 frontend tests**, and
 the TypeScript/production build pass. `/challenge` runs three reproducible synthetic
