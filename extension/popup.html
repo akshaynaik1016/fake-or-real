@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FAKE OR REAL Guard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="logo-icon">🛡️</div>
+      <div>
+        <div class="brand-title">FAKE OR REAL</div>
+        <div class="brand-tagline">Don't trust. Verify.</div>
+      </div>
+    </div>
+    <div id="status-pill" class="pill pill-safe">PROTECTED</div>
+  </div>
+
+  <div class="site-bar">
+    <span class="url-label">Target:</span>
+    <span id="current-url" class="current-url">Analyzing tab...</span>
+  </div>
+
+  <div class="score-card">
+    <div class="score-circle-container">
+      <div id="score-val" class="score-number">--</div>
+      <div class="score-label">TRUST SCORE</div>
+    </div>
+    <div class="score-meta">
+      <div class="risk-badge" id="risk-badge">SCANNING</div>
+      <div class="confidence-text">Confidence: <span id="conf-val">--%</span></div>
+      <div class="cert-status" id="ssl-status">HTTPS: Checking...</div>
+    </div>
+  </div>
+
+  <div class="checks-list">
+    <div class="check-item">
+      <span class="check-name">Organization Identity</span>
+      <span id="chk-org" class="check-val val-unknown">Checking</span>
+    </div>
+    <div class="check-item">
+      <span class="check-name">Domain Age & Reg</span>
+      <span id="chk-domain" class="check-val val-unknown">Checking</span>
+    </div>
+    <div class="check-item">
+      <span class="check-name">Threat Intelligence</span>
+      <span id="chk-threat" class="check-val val-unknown">Checking</span>
+    </div>
+    <div class="check-item">
+      <span class="check-name">Payment Gateway Risk</span>
+      <span id="chk-payment" class="check-val val-unknown">Checking</span>
+    </div>
+  </div>
+
+  <div id="warning-box" class="warning-box hidden">
+    <div class="warn-title">⚠ SUSPICIOUS SIGNALS</div>
+    <div id="warn-desc" class="warn-desc">Multiple anomalous indicators detected. Exercise caution before submitting payment or confidential personal data.</div>
+  </div>
+
+  <div class="actions">
+    <button id="deep-scan-btn" class="btn btn-primary">🔍 Deep Forensic Scan</button>
+    <button id="emergency-btn" class="btn btn-emergency">🚨 I Already Clicked</button>
+  </div>
+
+  <div class="footer">
+    <a href="http://127.0.0.1:5173" target="_blank" class="footer-link">Open Full Platform</a> •
+    <span class="disclaimer">Independent Evidence Engine</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

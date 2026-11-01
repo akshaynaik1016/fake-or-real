@@ -1,0 +1,166 @@
+import re
+from typing import Dict, Any, List, Optional
+
+# Verified corporate organizations and government/institutional entities
+VERIFIED_ORGANIZATIONS_REGISTRY: Dict[str, Dict[str, Any]] = {
+    "microsoft": {
+        "canonical_name": "Microsoft Corporation",
+        "official_domains": ["microsoft.com", "careers.microsoft.com", "linkedin.com/company/microsoft"],
+        "official_careers_url": "https://careers.microsoft.com",
+        "primary_country": "United States / Global",
+        "corporate_identifier": "US-SEC-0000789019",
+        "aliases": ["microsoft", "microsoft india", "msft", "microsoft technologies", "microsoft ai"]
+    },
+    "google": {
+        "canonical_name": "Google LLC / Alphabet Inc.",
+        "official_domains": ["google.com", "careers.google.com", "google.co.in"],
+        "official_careers_url": "https://careers.google.com",
+        "primary_country": "United States / Global",
+        "corporate_identifier": "US-SEC-0001652044",
+        "aliases": ["google", "google india", "alphabet", "google cloud"]
+    },
+    "amazon": {
+        "canonical_name": "Amazon.com, Inc.",
+        "official_domains": ["amazon.com", "amazon.jobs", "amazon.in"],
+        "official_careers_url": "https://amazon.jobs",
+        "primary_country": "United States / Global",
+        "corporate_identifier": "US-SEC-0001018724",
+        "aliases": ["amazon", "amazon web services", "aws", "amazon india"]
+    },
+    "tcs": {
+        "canonical_name": "Tata Consultancy Services Limited",
+        "official_domains": ["tcs.com", "nextstep.tcs.com", "careers.tcs.com"],
+        "official_careers_url": "https://nextstep.tcs.com",
+        "primary_country": "India",
+        "corporate_identifier": "CIN: L22210MH1995PLC084781 (MCA / ROC Mumbai)",
+        "aliases": ["tcs", "tata consultancy services", "tata consultancy", "tcs ion", "tcs nextstep"]
+    },
+    "infosys": {
+        "canonical_name": "Infosys Limited",
+        "official_domains": ["infosys.com", "career.infosys.com", "infy.com"],
+        "official_careers_url": "https://career.infosys.com",
+        "primary_country": "India",
+        "corporate_identifier": "CIN: L85110KA1981PLC013115 (MCA / ROC Bangalore)",
+        "aliases": ["infosys", "infosys limited", "infy", "infosys springboard"]
+    },
+    "wipro": {
+        "canonical_name": "Wipro Limited",
+        "official_domains": ["wipro.com", "careers.wipro.com"],
+        "official_careers_url": "https://careers.wipro.com",
+        "primary_country": "India",
+        "corporate_identifier": "CIN: L32102KA1945PLC020800 (MCA / ROC Bangalore)",
+        "aliases": ["wipro", "wipro limited", "wipro technologies"]
+    },
+    "isro": {
+        "canonical_name": "Indian Space Research Organisation",
+        "official_domains": ["isro.gov.in", "nrsc.gov.in", "sac.gov.in"],
+        "official_careers_url": "https://www.isro.gov.in/Careers.html",
+        "primary_country": "India",
+        "corporate_identifier": "Govt of India Department of Space",
+        "aliases": ["isro", "indian space research organisation"]
+    },
+    "drdo": {
+        "canonical_name": "Defence Research and Development Organisation",
+        "official_domains": ["drdo.gov.in", "rac.gov.in"],
+        "official_careers_url": "https://rac.gov.in",
+        "primary_country": "India",
+        "corporate_identifier": "Govt of India Ministry of Defence",
+        "aliases": ["drdo", "rac drdo"]
+    }
+}
+
+def identify_claimed_organization(text: str) -> Optional[Dict[str, Any]]:
+    """Scans text to identify any claimed prominent corporate or institutional organization"""
+    text_lower = text.lower()
+    for key, org_data in VERIFIED_ORGANIZATIONS_REGISTRY.items():
+        for alias in org_data["aliases"]:
+            # Word boundary regex match
+            pattern = rf"\b{re.escape(alias)}\b"
+            if re.search(pattern, text_lower):
+                return org_data
+    return None
+
+def verify_organization_domain_match(claimed_org_name: str, domain_name: str) -> Dict[str, Any]:
+    """
+    Evaluates whether the claimed organization owns or is officially associated with
+    the submitted domain name.
+    Detects CRITICAL IDENTITY MISMATCH.
+    """
+    clean_domain = domain_name.lower().strip()
+    org_key = None
+    org_data = None
+    
+    # Resolve organization record
+    claimed_lower = claimed_org_name.lower().strip()
+    for key, data in VERIFIED_ORGANIZATIONS_REGISTRY.items():
+        if key in claimed_lower or any(a in claimed_lower for a in data["aliases"]):
+            org_key = key
+            org_data = data
+            break
+            
+    if not org_data:
+        # Organization not in primary global registry; return neutral verification status
+        return {
+            "status": "UNVERIFIED_INDEPENDENT",
+            "verified": False,
+            "claimed_organization": claimed_org_name,
+            "canonical_name": claimed_org_name,
+            "official_domains": [],
+            "corporate_identifier": None,
+            "mismatch": False,
+            "explanation": f"'{claimed_org_name}' is not currently indexed in the high-assurance corporate registry. Independent manual verification of domain ownership is recommended.",
+            "severity": "moderate"
+        }
+        
+    # Check if the submitted domain is an official domain or subdomain of an official domain
+    is_domain_match = False
+    for off_domain in org_data["official_domains"]:
+        if clean_domain == off_domain or clean_domain.endswith(f".{off_domain}"):
+            is_domain_match = True
+            break
+            
+    if is_domain_match:
+        return {
+            "status": "VERIFIED_OFFICIAL_MATCH",
+            "verified": True,
+            "claimed_organization": claimed_org_name,
+            "canonical_name": org_data["canonical_name"],
+            "official_domains": org_data["official_domains"],
+            "official_careers_url": org_data.get("official_careers_url"),
+            "corporate_identifier": org_data.get("corporate_identifier"),
+            "mismatch": False,
+            "explanation": f"Domain '{clean_domain}' matches official corporate domain infrastructure for {org_data['canonical_name']}.",
+            "severity": "verified"
+        }
+    else:
+        # Mismatch detected
+        return {
+            "status": "CRITICAL_IDENTITY_MISMATCH",
+            "verified": False,
+            "claimed_organization": claimed_org_name,
+            "canonical_name": org_data["canonical_name"],
+            "official_domains": org_data["official_domains"],
+            "official_careers_url": org_data.get("official_careers_url"),
+            "corporate_identifier": org_data.get("corporate_identifier"),
+            "mismatch": True,
+            "explanation": f"The submitted opportunity claims to represent {org_data['canonical_name']}, but the analyzed domain '{clean_domain}' could not be independently associated with {org_data['canonical_name']}'s official domain infrastructure.",
+            "severity": "critical"
+        }
+
+def verify_organization_match(claimed_org_name: str, domain_name: str) -> Dict[str, Any]:
+    """Test and convenience alias for organization domain verification."""
+    res = verify_organization_domain_match(claimed_org_name, domain_name)
+    if res["verified"]:
+        status = "VERIFIED"
+    elif res["mismatch"]:
+        status = "CRITICAL_MISMATCH"
+    else:
+        status = "UNVERIFIED"
+        
+    return {
+        "status": status,
+        "claimed_org": claimed_org_name,
+        "is_official": res["verified"],
+        "explanation": res["explanation"],
+        "details": res
+    }
