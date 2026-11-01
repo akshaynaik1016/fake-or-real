@@ -29,7 +29,7 @@ async def execute_recommendation(db, scan, action_id: str, expected_revision: in
     reserved["revision"] += 1
     reserved["history"].append({"action_id": action_id, "status": "RUNNING",
         "timestamp": datetime.now(timezone.utc).isoformat()})
-    if action_id == "research_warnings":
+    if action_id in {"research_warnings","verify_notice"}:
         if state["research_calls"] >= settings.MAX_RESEARCH_CALLS:
             raise HTTPException(409, "Search budget exhausted")
         reserved["research_calls"] += 1
@@ -55,15 +55,22 @@ async def execute_recommendation(db, scan, action_id: str, expected_revision: in
             official = [d for d in org["official_domains"] if "/" not in d]
             match = any(domain == d or domain.endswith("." + d) for d in official)
             details = f"Submitted sender domain {domain} {'matches' if match else 'does not match'} bundled organization reference. Sender authorization is still unknown."
-            new = normalize_evidence([{"category": "identity_match", "severity": "verified" if match else "high",
+            new = normalize_evidence([{"category": "identity_match", "severity": "verified" if match else "moderate",
                 "evidence": details, "explanation": "Reference comparison only; not a live registry query or sender authentication.",
                 "source": "Bundled organization domain reference", "confidence": 0.85,
                 "observed_value": email["value"], "related_entities": [email["id"]],
                 "verification_status": "REFERENCE_MATCH" if match else "REFERENCE_MISMATCH"}])
             state["evidence"] = normalize_evidence(state["evidence"] + new)
+    elif action_id == 'verify_notice':
+        from app.services.notice_verification import retrieve_notice
+        result=await retrieve_notice(state.get('claims',[]))
+        state['research'].append(result)
+        status='COMPLETED' if result['status']=='COMPLETED' else 'UNAVAILABLE'
+        details=result['reason']
     elif action_id == "research_warnings":
+        from app.services.notice_verification import anchors
         result = await TavilyService().search(
-            f'{state["claimed_organization"][:100]} recruitment internship payment scam warnings', state["official_domains"])
+            (anchors(state.get('claims',[])) or {}).get('advertisement_number','')+' '+state["claimed_organization"][:100]+' recruitment payment context', state["official_domains"])
         state["research"].append(result.model_dump())
         status = "COMPLETED" if result.status == "COMPLETED" else "UNAVAILABLE"
         details = result.reason
@@ -81,7 +88,7 @@ async def execute_recommendation(db, scan, action_id: str, expected_revision: in
     state["language"] = {"provider": "deterministic", "mode": "FALLBACK", "claims": [],
         "reason": "Investigation updated using recorded evidence",
         **deterministic_summary(state["evidence"], 8)}
-    refresh_investigation(state)
+    state=refresh_investigation(state)
     state["last_change"] = {"action_id": action_id, "before": before, "after": state["fusion"],
         "reason": details, "risk_score_changed": before["risk_score"] != state["fusion"]["risk_score"],
         "status":status}

@@ -22,11 +22,11 @@ test('labels are short while source values are unchanged',()=>{
 });
 test('unavailable checks are unresolved, not failed',()=>{
   const checks=[{check_name:'Payment',status:'failed'},...Array.from({length:8},(_,i)=>({check_name:String(i),status:'unavailable'}))];
-  const result=summarizeVerification(checks as any); assert.equal(result.text,'1 failed · 8 unresolved · 0 verified');
+  const result=summarizeVerification(checks as any); assert.equal(result.text,'1 failed · 8 unresolved · 0 independently verified');
   assert.equal(result.failed,1);assert.equal(result.unavailable,8);
 });
 test('all five check states and historical passed values are supported',()=>{
   const result=summarizeVerification(['passed','verified','failed','warning','unavailable','not_performed'].map(status=>({check_name:status,status})) as any);
-  assert.equal(result.verified,2);assert.equal(result.unresolved,3);assert.equal(checkStatus('unknown'),'unavailable');
-  assert.equal(summarizeVerification([]).text,'0 failed · 0 unresolved · 0 verified');
+  assert.equal(result.verified,0);assert.equal(result.completed,2);assert.equal(result.unresolved,5);assert.equal(checkStatus('unknown'),'unavailable');
+  assert.equal(summarizeVerification([]).text,'0 failed · 0 unresolved · 0 independently verified');
 });

@@ -45,9 +45,11 @@ def test_analyze_text_suspicious_internship():
     res = client.post("/api/analyze/text", json=payload)
     assert res.status_code == 200
     data = res.json()
-    assert data["risk_level"] in ["CRITICAL RISK", "HIGH RISK"]
+    assert data["risk_level"] == "ELEVATED CONCERN"
+    assert data["assessment"]["verification_status"] == "UNRESOLVED"
     assert data["trust_score"] < 40
-    assert data["analysis_confidence"] > 70
+    assert 0 <= data["analysis_confidence"] <= 100
+    assert data["assessment"]["confidence_kind"] == "HEURISTIC_RELIABILITY_INDEX"
     assert len(data["evidence"]) > 0
     assert len(data["verification_results"]) == 9
     assert any("fee" in r.lower() or "payment" in r.lower() for r in data["recommended_actions"])
@@ -61,8 +63,9 @@ def test_analyze_url_legitimate():
     res = client.post("/api/analyze/url", json=payload)
     assert res.status_code == 200
     data = res.json()
-    assert data["risk_level"] == "LOW RISK"
-    assert data["trust_score"] >= 80
+    assert data["risk_level"] == "UNDETERMINED"
+    assert data["trust_score"] is None
+    assert data["assessment"]["offer_authenticity"] == "UNRESOLVED"
 
 def test_demo_cases_list_and_run():
     res = client.get("/api/demo/cases")
@@ -75,7 +78,7 @@ def test_demo_cases_list_and_run():
     run_res = client.post("/api/demo/run/demo-fake-msft-internship")
     assert run_res.status_code == 200
     demo_data = run_res.json()
-    assert demo_data["risk_level"] == "CRITICAL RISK"
+    assert demo_data["risk_level"] == "ELEVATED CONCERN"
     assert demo_data["is_demo"] is True
 
 def test_emergency_triage_guidance():

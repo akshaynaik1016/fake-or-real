@@ -1,3 +1,4 @@
+import {riskIndex} from '../components/common/assessmentSemantics';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -91,17 +92,17 @@ export const DashboardPage: React.FC = () => {
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-white">{stats.opportunities_checked}</p>
           <p className="text-[11px] text-emerald-400 mt-1 flex items-center space-x-1 font-mono">
-            <span>+18% from last week</span>
+            <span>Recorded scans</span>
           </p>
         </div>
 
         <div className="p-4 rounded-2xl glass-card border border-emerald-500/40 bg-emerald-950/20">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono uppercase text-slate-300 font-bold">Low risk baseline</span>
+            <span className="text-[11px] font-mono uppercase text-slate-300 font-bold">Authenticated offers</span>
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-emerald-400">{stats.safe_count}</p>
-          <p className="text-[11px] text-slate-300 mt-1">Legacy score; verify coverage separately</p>
+          <p className="text-[11px] text-slate-300 mt-1">No offer-authentication adapter configured</p>
         </div>
 
         <div className="p-4 rounded-2xl glass-card border border-amber-500/40 bg-amber-950/20">
@@ -110,12 +111,12 @@ export const DashboardPage: React.FC = () => {
             <AlertTriangle className="w-4 h-4 text-amber-400" />
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-amber-400">{stats.needs_verification}</p>
-          <p className="text-[11px] text-slate-300 mt-1">Moderate risk markers</p>
+          <p className="text-[11px] text-slate-300 mt-1">Undetermined; independent evidence needed</p>
         </div>
 
         <div className="p-4 rounded-2xl glass-card border border-rose-500/40 bg-rose-950/20">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-mono uppercase text-slate-300 font-bold">High / Critical</span>
+            <span className="text-[11px] font-mono uppercase text-slate-300 font-bold">Elevated concern</span>
             <AlertOctagon className="w-4 h-4 text-rose-500" />
           </div>
           <p className="text-2xl sm:text-3xl font-black font-mono text-rose-500">
@@ -268,7 +269,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3 flex-shrink-0">
-                <span className="font-mono text-sm font-bold text-slate-200">{sc.trust_score}/100</span>
+                <span className="font-mono text-sm font-bold text-slate-200">{riskIndex(sc.trust_score,sc.risk_level)}</span>
                 <RiskBadge level={sc.risk_level} size="sm" />
               </div>
             </Link>

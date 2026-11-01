@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 
+import {EvidenceChallengePage} from './pages/EvidenceChallengePage';
 import { CasesPage } from './pages/CasesPage';
 import { CaseWorkspacePage } from './pages/CaseWorkspacePage';
 // Pages
@@ -35,6 +36,7 @@ export const App: React.FC = () => {
         <main className="flex-1">
           <Routes>
             <Route path="/" element={<LandingPage />} />
+            <Route path="/challenge" element={<EvidenceChallengePage />} />
             <Route path="/cases" element={<CasesPage />} />
             <Route path="/cases/:id" element={<CaseWorkspacePage />} />
             <Route path="/analyze" element={<AnalyzePage />} />

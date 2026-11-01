@@ -15,7 +15,8 @@ from app.api.v1.endpoints import (
     demo,
     health,
     investigations,
-    cases
+    cases,
+    challenge
 )
 
 api_router = APIRouter(dependencies=[Depends(enforce_access)])
@@ -37,3 +38,5 @@ api_router.include_router(health.router)
 api_router.include_router(investigations.router)
 
 api_router.include_router(cases.router)
+
+api_router.include_router(challenge.router)

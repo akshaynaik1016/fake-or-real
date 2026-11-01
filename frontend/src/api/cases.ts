@@ -1,11 +1,11 @@
-import { API_BASE,authenticatedFetch,analysisErrorMessage,type EvidenceItem,type Fusion,type Investigation } from './client';
-export interface Citation {source_id:string;source_title:string;source_type?:string;claim_id?:string;excerpt:string;field?:string;start?:number;end?:number;page?:number}
+import { API_BASE,authenticatedFetch,analysisErrorMessage,type EvidenceItem,type Fusion,type Investigation,type Assessment,type NoticeReview } from './client';
+export interface Citation {url?:string;source_id:string;source_title:string;source_type?:string;claim_id?:string;excerpt:string;field?:string;start?:number;end?:number;page?:number}
 export interface CaseClaim {id:string;source_id:string;claim_type:string;value:unknown;excerpt:string;location:{field:string;start:number;end:number;page?:number};extraction_method:string;verification_status:string}
 export interface CaseSource {id:string;title:string;input_type:string;filename?:string;submitted_content:string;extracted_text:string;processing_status:string;extraction_status:string;error_code?:string;error_message?:string;scan_id?:string;analysis:Investigation;metadata_json:Record<string,unknown>}
 export interface CaseFinding {id:string;kind:string;classification:string;severity:string;description:string;citations:Citation[]}
-export interface CaseDetail {case_id:string;title:string;revision:number;status:string;fusion:Fusion;sources:CaseSource[];claims:CaseClaim[];cross_source_findings:CaseFinding[];evidence:EvidenceItem[];missing_information:string[];duplicate_sources:Record<string,string>;distinct_content_count:number;recommendations:Investigation['recommendations'];graph:Investigation['graph'];research:Investigation['research'];research_calls:number;last_action?:{action_id:string;status:string;message:string}}
-export interface CaseRevision {revision:number;event:string;created_at:string;fusion:Fusion}
-export interface CaseListItem {id:string;title:string;status:string;revision:number;fusion:Fusion;source_count:number;updated_at:string}
+export interface CaseDetail {notice_review?:NoticeReview;assessment?:Assessment;case_id:string;title:string;revision:number;status:string;fusion:Fusion;sources:CaseSource[];claims:CaseClaim[];cross_source_findings:CaseFinding[];evidence:EvidenceItem[];missing_information:string[];duplicate_sources:Record<string,string>;distinct_content_count:number;recommendations:Investigation['recommendations'];graph:Investigation['graph'];research:Investigation['research'];research_calls:number;last_action?:{action_id:string;status:string;message:string}}
+export interface CaseRevision {assessment?:Assessment;revision:number;event:string;created_at:string;fusion:Fusion}
+export interface CaseListItem {assessment?:Assessment;id:string;title:string;status:string;revision:number;fusion:Fusion;source_count:number;updated_at:string}
 async function request<T>(path:string,options:RequestInit={}):Promise<T>{
   const response=await authenticatedFetch(`${API_BASE}/cases${path}`,options);const data=await response.json();
   if(!response.ok)throw new Error(analysisErrorMessage(data.detail));return data;

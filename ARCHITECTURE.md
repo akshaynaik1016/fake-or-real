@@ -75,3 +75,42 @@ SNI/certificate verification, redirect validation and bounded passive content.
 The UI adds `/cases` and `/cases/:id` to the existing router and React Flow graph.
 MULTI_SOURCE_WORKSPACE.md documents request-time processing, retention, duplicate
 detection and other operational limits.
+
+
+## Shared uncertainty and accuracy evaluation
+
+`organization_mentions` separates submitted name extraction from reference matching.
+The existing cited case extractor is reused for single-source claims; scanner spans
+and source identifiers survive persistence. `assessment_semantics` defines concern
+versus abstention separately from independent claim verification. Integrity views
+project stored data conservatively without rescanning or rewriting historical rows.
+Primary API consumers and React labels share this meaning; legacy raw scoring stays
+in baseline data for audit. Content completion and reference observations are never
+promoted to independent offer authentication.
+
+`evaluation/runner.py` calls existing persisted case services using labelled synthetic
+inputs, checks exact provenance and reports separate extraction and concern-policy
+metrics. `evaluate_accuracy.py` runs it offline with an isolated temporary database.
+The Evidence Challenge endpoint allows only A/B/C fixtures and returns actual stored
+case outputs; no arbitrary tool execution or injected provider result is exposed.
+See ACCURACY_INTEGRITY_REPORT.md for boundaries and measured development-set results.
+
+
+## Context-aware recruitment evidence
+
+The existing monetary scanner delegates contextual enrichment to payment_context.py;
+the original matcher and investigation contracts remain in use. Evidence grouping is
+shared by scan and case assessment before fusion. recruitment_claims.py extracts
+labelled notice metadata, while recruitment_consistency.py preserves scoped internal
+fee-policy inconsistencies. Normal account instructions are handled separately from
+outward credential requests by the existing sensitive-data scanner.
+
+notice_verification.py adds an exact-notice action through existing execution,
+reservation, budget and persistence services. It searches exact anchors, retrieves
+bounded full documents on a trusted HTTPS host and compares scoped claims. Independent
+records retain retrieval provenance. User uploads and snippets cannot enter as
+independent corroboration; an organization reference cannot authenticate an offer.
+recruitment_graph.py extends existing graph assembly and React Flow rendering with
+notice, fee and channel relationships. RecruitmentReview reuses existing evidence
+components for five plain-language sections. No LLM participates in scoring or creates
+facts. See CONTEXT_AWARE_VERIFICATION_REPORT.md for observed results and limitations.

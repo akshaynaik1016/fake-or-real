@@ -60,7 +60,7 @@ export const SettingsPage: React.FC = () => {
             <span className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded ${
               total === 100 ? 'bg-emerald-950 text-emerald-400 border border-emerald-500/40' : 'bg-rose-950 text-rose-400 border border-rose-500/40'
             }`}>
-              {total === 100 ? 'CALIBRATED' : 'UNBALANCED'}
+              {total === 100 ? 'BALANCED' : 'UNBALANCED'}
             </span>
           </div>
         </div>

@@ -83,13 +83,14 @@ def analyze_email_security(raw_email_or_headers: str) -> Dict[str, Any]:
     if display_name:
         display_lower = display_name.lower()
         # Does display name claim an enterprise brand or HR role?
-        has_enterprise_claim = any(kw in display_lower for kw in ENTERPRISE_KEYWORDS)
+        from app.scanners.org_scanner import identify_claimed_organization
+        has_enterprise_claim = bool(identify_claimed_organization(display_name))
         if has_enterprise_claim and is_free_webmail:
             flags.append({
                 "code": "DISPLAY_NAME_ENTERPRISE_MISMATCH",
-                "severity": "critical",
+                "severity": "moderate",
                 "message": f"Display Name claims '{display_name}' but sender is using personal/free webmail ({sender_email}).",
-                "detail": "Sender identity could not be independently verified. Enterprise recruitment teams use corporate domain email infrastructure rather than personal free accounts."
+                "detail": "Sender identity could not be independently verified. A personal address alone does not prove impersonation; independent authorization remains unknown."
             })
             
     # 2. Reply-To Mismatch
@@ -98,7 +99,7 @@ def analyze_email_security(raw_email_or_headers: str) -> Dict[str, Any]:
         if parsed_reply["email"] and parsed_reply["email"] != sender_email:
             flags.append({
                 "code": "REPLY_TO_MISMATCH",
-                "severity": "high",
+                "severity": "moderate",
                 "message": f"Reply-To address ('{parsed_reply['email']}') differs from sender From address ('{sender_email}').",
                 "detail": "Attackers configure mismatched Reply-To addresses to redirect responses to external mailboxes."
             })
@@ -107,15 +108,15 @@ def analyze_email_security(raw_email_or_headers: str) -> Dict[str, Any]:
     if spf_result == "fail":
         flags.append({
             "code": "SPF_VALIDATION_FAILED",
-            "severity": "high",
-            "message": "SPF authentication failed for sending server.",
+            "severity": "moderate",
+            "message": "Submitted headers report SPF failure; no independent SPF validation performed.",
             "detail": "Sending IP was not authorized by the domain's SPF policy."
         })
     if dkim_result == "fail":
         flags.append({
             "code": "DKIM_VALIDATION_FAILED",
-            "severity": "high",
-            "message": "DKIM digital signature verification failed.",
+            "severity": "moderate",
+            "message": "Submitted headers report DKIM failure; no independent signature validation performed.",
             "detail": "Email contents may have been altered in transit or forged."
         })
 

@@ -58,14 +58,32 @@ def refresh_investigation(state: dict) -> dict:
                 "explanation": "Search excerpt, not confirmation of the sender or offer.",
                 "observed_value": source["extracted_information"], "timestamp": source["retrieved_at"],
                 "origin": "EXTERNAL_SOURCE", "verification_status": source["verification_status"],
+                "source_id":source["id"],"original_excerpt":source["extracted_information"],"extracted_value":source["extracted_information"],"extraction_method":"tavily_search","claim_type":"external_context","provenance_kind":"INDEPENDENTLY_RETRIEVED_CONTEXT",
                 "correlation_group": "external_research:" + (urlsplit(source["url"]).hostname or "unknown")})
-    state["evidence"] = normalize_evidence(state["evidence"] + external)
+    from app.services.notice_verification import compare_notice,notice_evidence,notice_action
+    state['notice_review']=compare_notice(state.get('claims',[]),state['research'])
+    retained=[e for e in state['evidence'] if e['category'] not in {'notice_corroboration','notice_contradiction','notice_possible_inconsistency','recruitment_policy_conflict'}]
+    from app.services.recruitment_consistency import internal_policy_findings
+    state["evidence"] = normalize_evidence(retained + external + notice_evidence(state['notice_review'])+internal_policy_findings(state.get('claims',[])))
+    for finding in state['evidence']:
+        if not finding.get('source_id'):finding['source_id']=state.get('source_id')
+        if finding.get('extracted_value') is None:finding['extracted_value']=finding['observed_value']
+        if not finding.get('claim_type'):finding['claim_type']=finding['category']
+        matching=next((c for c in state.get('claims',[]) if c['excerpt']==finding['observed_value']),None)
+        if matching and not finding.get('original_excerpt'):
+            finding['original_excerpt']=matching['excerpt'];finding['source_spans']=[{**matching['location'],'text':matching['excerpt'],'kind':matching['claim_type']}]
+            finding['provenance_kind']='OBSERVED_IN_SUBMISSION'
     state["fusion"] = fuse_evidence(state["evidence"], state["coverage_checks"])
     state["graph"] = build_trust_graph(state["entities"], state["evidence"], state["research"])
     state["recommendations"] = recommend(state["entities"], state["evidence"], state["history"],
         bool(settings.TAVILY_API_KEY), settings.MAX_RESEARCH_CALLS - state["research_calls"], bool(organization_reference(state.get("claimed_organization"))))
+    action=notice_action(state.get('claims',[]),state['research_calls'],state['history'],state['research'])
+    if action:state['recommendations'].insert(0,action)
+    from app.services.recruitment_graph import enrich_recruitment_graph
+    state['graph']=enrich_recruitment_graph(state['graph'],state.get('claims',[]),state['notice_review'],'submission')
     state["status"] = "PARTIAL" if state["fusion"]["unknowns"] else "COMPLETED"
-    return state
+    from app.services.assessment_semantics import integrity_view
+    return integrity_view(state)
 
 
 async def investigate(content: str, baseline: dict, *, perform_research: bool = True, use_llm: bool = True) -> dict:
@@ -75,14 +93,20 @@ async def investigate(content: str, baseline: dict, *, perform_research: bool = 
     for finding in evidence:
         if not finding["related_entities"]:
             finding["related_entities"] = [e["id"] for e in entities if e["value"].lower() in finding["evidence"].lower()]
+    from app.services.case_claims import extract_claims
+    import hashlib
+    source_id='submission-'+hashlib.sha256(content.encode()).hexdigest()[:20]
+    claims=extract_claims(source_id,content,baseline.get('input_type','text'))
     org_ref = organization_reference(org)
     official = [d for d in (org_ref or {}).get("official_domains", []) if "/" not in d]
     if perform_research and org:
-        query = f'{org[:100]} official careers recruitment fees'
+        from app.services.notice_verification import anchors
+        exact=anchors(claims)
+        query = (f'"{exact["advertisement_number"]}" {org[:100]} {exact["job_title"]}' if exact else f'{org[:100]} official careers recruitment fees')[:250]
         research = await TavilyService().search(query, official)
         calls = int(bool(settings.TAVILY_API_KEY))
     else:
-        research = ResearchResult(status="SEARCH_NOT_PERFORMED", reason="No organization identified or historical snapshot")
+        research = ResearchResult(status="SEARCH_NOT_PERFORMED", reason="Research was not requested for this source; no external verification was performed." if org else "No organization claim identified; external research was not performed.")
         calls = 0
     checks = [
         {"name": "Content rules", "completed": bool(content.strip()), "reason": "No extracted text"},
@@ -96,8 +120,21 @@ async def investigate(content: str, baseline: dict, *, perform_research: bool = 
         {"name": "Independent research", "completed": research.status == "COMPLETED", "reason": research.reason},
         {"name": "Specific offer authorization", "completed": False, "reason": "Requires confirmation from organization"},
     ]
+    # Ground rule findings in exact submitted spans whenever retained by the scanner.
+    for finding in evidence:
+        finding['source_id']=source_id
+        finding['claim_type']=finding['category']
+        finding['extracted_value']=finding['observed_value']
+        finding['extraction_method']='deterministic_rule' if finding['origin']=='DETERMINISTIC_RULE' else finding['origin'].lower()
+        spans=finding.get('source_spans',[])
+        if not spans and finding['observed_value'] in content and finding['observed_value']:
+            start=content.index(finding['observed_value'])
+            spans=[{'start':start,'end':start+len(finding['observed_value']),'text':finding['observed_value'],'kind':'observation'}]
+            finding['source_spans']=spans
+        finding['original_excerpt']=spans[0]['text'] if spans else None
+        finding['provenance_kind']='OBSERVED_IN_SUBMISSION' if spans else 'RULE_OUTPUT'
     fallback = deterministic_summary(evidence)
-    state = {"version": 1, "revision": 1, "entities": entities, "evidence": evidence,
+    state = {"version": 2, "revision": 1,"source_id":source_id,"claims":claims, "entities": entities, "evidence": evidence,
         "research": [research.model_dump()], "research_calls": calls, "coverage_checks": checks,
         "history": [], "monetary_entities": baseline.get("monetary_entities", []),
         "document_extraction": baseline.get("document_extraction"), "claimed_organization": org, "official_domains": official,

@@ -20,6 +20,8 @@ export interface EvidenceItem {
   verification_status?: string;
   correlation_group?: string;
   related_entities?: string[];
+  fact_key?:string;occurrences?:number;citations?:GraphCitation[];source_ids?:string[];payment_context?:Record<string,unknown>;
+  source_id?:string; original_excerpt?:string|null; extracted_value?:unknown; extraction_method?:string; claim_type?:string; provenance_kind?:string;
   source_spans?: { start:number; end:number; text:string; kind:string }[];
 }
 
@@ -32,7 +34,7 @@ export interface RiskIndicatorItem {
 
 export interface VerificationCheckItem {
   check_name: string;
-  status: "passed" | "verified" | "warning" | "failed" | "unavailable" | "not_performed";
+  status: "passed" | "verified" | "warning" | "failed" | "unavailable" | "not_performed" | "completed";
   details?: string;
 }
 
@@ -49,7 +51,7 @@ export interface ScanDetail {
   input_content: string;
   target_identifier?: string;
   status: string;
-  trust_score: number;
+  trust_score: number | null;
   risk_level: string;
   analysis_confidence: number;
   summary?: string;
@@ -62,6 +64,7 @@ export interface ScanDetail {
   timeline: TimelineEvent[];
   threat_intel_details?: any;
   investigation?: Investigation;
+  assessment?:Assessment;
 }
 
 export async function fetchDashboardData() {
@@ -176,7 +179,12 @@ export interface ResearchSource {
   id: string; title: string; url: string; extracted_information: string; retrieved_at: string;
   source_type: string; relevance: number; claim: string; verification_status: string;
 }
+export interface Assessment {state:string;label:string;verification_status:string;offer_authenticity:string;risk_score:number|null;verified_claims:{claim_id:string;evidence_id:string;scope:string}[];explanation:string}
+export interface StructuredClaim {id:string;source_id:string;claim_type:string;value:unknown;excerpt:string;location:{field:string;start:number;end:number;page?:number};extraction_method:string;verification_status:string}
+export interface NoticeReview {claim_results:{id:string;claim_id:string;claim_type:string;value:unknown;status:string;scope:string;reason:string;citations:GraphCitation[]}[];unknowns:string[];independent_documents:{id:string;title:string;url:string;retrieved_at:string}[];offer_authenticity?:string}
 export interface Investigation {
+  notice_review?:NoticeReview;
+  assessment?:Assessment;claims?:StructuredClaim[];source_id?:string;
   monetary_entities?: MonetaryEntity[];
   document_extraction?: {filename?:string; content_origin?:string; ocr_status?:string; user_corrected?:boolean};
   version: number; revision: number; status: string; claimed_organization?: string;
@@ -223,6 +231,7 @@ export async function fetchJson(path: string) {
 }
 
 export interface MonetaryEntity {
+  page?:number;supporting_text?:string;classification_rationale?:string;recipient?:string|null;channel?:string|null;amount_role?:string;
   raw:string; value:string; currency:string; role:string; category:string; period:string|null;
   start:number; end:number; context:string; ambiguity_reason?:string|null;
 }
@@ -254,4 +263,4 @@ export async function submitReviewedScreenshot(review:ReviewedScreenshot):Promis
   return data;
 }
 
-export interface GraphCitation {source_id:string;source_title:string;excerpt:string;field?:string;start?:number;end?:number;page?:number}
+export interface GraphCitation {url?:string;source_id:string;source_title:string;excerpt:string;field?:string;start?:number;end?:number;page?:number}

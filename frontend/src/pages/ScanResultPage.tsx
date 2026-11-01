@@ -165,7 +165,7 @@ export const ScanResultPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
-                Legacy deterministic baseline
+                Assessment and recorded concerns
               </span>
               <RiskBadge level={scan.risk_level} size="md" />
             </div>
@@ -213,7 +213,8 @@ export const ScanResultPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left 2 Cols: Expandable Evidence Cards (Requirement 65 & 86) */}
-        <div className="lg:col-span-2 space-y-4">
+        <details className="lg:col-span-2 space-y-4">
+          <summary className="cursor-pointer text-cyan-300">Advanced evidence chain — same grouped findings</summary>
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-bold text-white text-lg">Observed Forensic Evidence</h2>
@@ -226,10 +227,10 @@ export const ScanResultPage: React.FC = () => {
 
           <div className="space-y-3">
             {scan.evidence.map((ev, idx) => (
-              <EvidenceCard key={idx} evidence={ev} />
+              <EvidenceCard key={idx} evidence={ev} anchorPrefix="audit-evidence" />
             ))}
           </div>
-        </div>
+        </details>
 
         {/* Right Col: Contextual Safety Recommendations & Timeline (Requirement 38 & 66) */}
         <div className="space-y-6">
@@ -302,7 +303,7 @@ export const ScanResultPage: React.FC = () => {
         trustScore={scan.trust_score}
         riskLevel={scan.risk_level}
         confidence={scan.analysis_confidence}
-        checksPassed={scan.verification_results.filter(c => ['passed','verified'].includes(c.status)).length}
+        checksPassed={scan.verification_results.filter(c => c.status==='completed').length}
         totalChecks={scan.verification_results.length || 9}
         evidenceCount={scan.evidence.length}
         isOpen={isPassportModalOpen}

@@ -12,12 +12,13 @@ from app.services.scan_service import execute_full_scan
 router = APIRouter(prefix="/scans", tags=["Scans"])
 
 @router.get("", response_model=List[ScanResponse])
-def list_scans(limit: int = 50, db: Session = Depends(get_db), actor: Optional[User] = Depends(current_actor)):
+async def list_scans(limit: int = 50, db: Session = Depends(get_db), actor: Optional[User] = Depends(current_actor)):
     query = db.query(Scan)
     if actor and actor.role != "ADMIN":
         query = query.filter(Scan.user_id == actor.id)
     scans = query.order_by(Scan.created_at.desc()).limit(max(1, min(limit, 100))).all()
-    return [ScanResponse.model_validate(s) for s in scans]
+    from app.services.investigation_store import scan_response
+    return [ScanResponse(**(await scan_response(db,s.id))) for s in scans]
 
 @router.post("", response_model=ScanDetailResponse)
 async def create_scan_endpoint(req: ScanCreateRequest, db: Session = Depends(get_db), actor: Optional[User] = Depends(current_actor)):

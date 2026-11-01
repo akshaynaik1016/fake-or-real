@@ -266,7 +266,7 @@ export const LandingPage: React.FC = () => {
                 <h3 className="font-bold text-sm text-slate-200">Identity Cross-Check</h3>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Matches claimed corporate entities against authoritative registries and verified career domains.
+                Matches claimed corporate entities against bundled organization references and known career domains; this does not authenticate an offer.
               </p>
             </div>
 
@@ -348,7 +348,7 @@ export const LandingPage: React.FC = () => {
               <h3 className="font-bold text-lg text-white mb-2">Evidence-Grounded AI Investigator</h3>
               <p className="text-xs text-slate-400 leading-relaxed">
                 Ask interactive questions like "Why is this domain risky?" or "Is Microsoft real?"
-                The conversational assistant is strictly bound to verified evidence and never hallucinates facts.
+                The conversational assistant is bound to recorded evidence, with deterministic fallback and explicit uncertainty.
               </p>
             </div>
             <Link to="/analyze" className="mt-6 text-xs font-bold text-purple-400 hover:underline flex items-center space-x-1">

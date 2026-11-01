@@ -72,13 +72,14 @@ def assess_case(case,sources,claims):
             ev=deepcopy(original);ev['id']=str(uuid5(NAMESPACE_URL,f"case:{case.id}:{source['content_hash']}:{original['id']}"))
             refs=[]
             for span in original.get('source_spans',[]):
-                refs.append({'source_id':source['id'],'source_title':source['title'],'field':'extracted_text','excerpt':span['text'],'start':span['start'],'end':span['end']})
+                refs.append({'source_id':source['id'],'source_title':source['title'],'field':'extracted_text','excerpt':span['text'],'start':span['start'],'end':span['end'],**({'page':span['page']} if span.get('page') else {})})
             if not refs:
                 observed=original.get('observed_value','');start=source['extracted_text'].find(observed) if observed else -1
                 refs=[{'source_id':source['id'],'source_title':source['title'],'field':'extracted_text' if start>=0 else 'scanner_output',
                        'excerpt':observed if start>=0 else original['evidence'],**({'start':start,'end':start+len(observed)} if start>=0 else {})}]
-            ev['citations']=refs;ev['related_entities']=[];dedup[ev['id']]=ev
-    evidence=list(dedup.values())
+            ev['source_id']=source['id'];ev['source_ids']=[source['id']];ev['citations']=refs;ev['related_entities']=[];dedup[ev['id']]=ev
+    from app.services.evidence_service import group_evidence
+    evidence=group_evidence(list(dedup.values()),across_sources=True)
     for finding in findings:
         if finding['classification'] not in {'CONFIRMED_CONTRADICTION','POSSIBLE_INCONSISTENCY'}:continue
         evidence.append({'id':'fusion-'+finding['id'],'category':'cross_source_'+finding['kind'].lower(),
@@ -87,7 +88,11 @@ def assess_case(case,sources,claims):
             'origin':'DETERMINISTIC_RULE','verification_status':'OBSERVED_CLAIM_DISAGREEMENT',
             'correlation_group':'payment' if finding['kind']=='FEE_INSTRUCTION_CONFLICT' else 'cross_source_'+finding['kind'].lower(),
             'explanation':'Comparison of cited submitted claims; no external authenticity judgment.',
-            'citations':finding['citations'],'related_entities':[]})
+            'citations':finding['citations'],'source_ids':list(dict.fromkeys(c['source_id'] for c in finding['citations'])),
+            'claim_type':finding['kind'],'extraction_method':'deterministic_claim_comparison','provenance_kind':'RULE_OUTPUT','original_excerpt':None,'extracted_value':[c['excerpt'] for c in finding['citations']],'related_entities':[]})
+    from app.services.notice_verification import compare_notice,notice_evidence,notice_action
+    notice_review=compare_notice(claims,case.research_results)
+    evidence.extend(notice_evidence(notice_review))
     fusion=fuse_evidence(evidence,checks)
     strong_concern=any(e['severity'] in {'high','critical'} and e.get('origin') not in {'SYNTHETIC','EXTERNAL_SOURCE','AI_INTERPRETATION'} and e.get('verification_status') not in {'UNKNOWN','UNAVAILABLE','SYNTHETIC'} for e in evidence)
     if fusion['risk_level']=='INSUFFICIENT_INFORMATION' or not strong_concern:
@@ -108,6 +113,8 @@ def assess_case(case,sources,claims):
                 recommendations.append(recommendation)
     if any(c['claim_type']=='fee' for c in claims):rec('confirm_fee','Confirm whether the fee is authorized','Pause payment. Contact the organization through independently sourced official details and ask about this exact fee.',100)
     if any(f['classification'] in {'CONFIRMED_CONTRADICTION','POSSIBLE_INCONSISTENCY'} for f in findings):rec('resolve_conflicts','Resolve conflicting opportunity terms','Ask the organization through an independently sourced contact to confirm the role, stipend, duration and application channel in writing.',95)
+    exact_action=notice_action(claims,case.research_calls,research=case.research_results)
+    if exact_action:recommendations.append(exact_action)
     orgs=list(dict.fromkeys(c['value'] for c in claims if c['claim_type']=='organization'))
     if len(orgs)==1:
         completed=any(r.get('status')=='COMPLETED' and r.get('organization')==orgs[0] for r in case.research_results)
@@ -119,9 +126,11 @@ def assess_case(case,sources,claims):
     if any(c['claim_type']=='application_url' for c in claims):rec('verify_url','Verify the application URL','Type the independently known official careers address and compare the application route. Avoid login/payment links supplied only by the recruiter.',80)
     if not sources:rec('add_source','Add the original opportunity source','Add a poster, offer letter, email, URL or message. Missing evidence cannot establish safety.',90)
     status='NEEDS_EVIDENCE' if not sources else 'NEEDS_REVIEW' if any(s['processing_status']=='NEEDS_REVIEW' for s in sources) else 'PARTIAL' if unknowns or fusion['unknowns'] else 'ACTIVE'
-    return {'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
+    from app.services.recruitment_graph import enrich_recruitment_graph
+    from app.services.assessment_semantics import assessment_for
+    return {'notice_review':notice_review,'assessment':assessment_for(fusion,evidence,claims),'case_id':case.id,'title':case.title,'revision':case.revision,'status':status,'fusion':fusion,'sources':sources,
         'claims':claims,'cross_source_findings':findings,'evidence':evidence,'missing_information':unknowns,
         'duplicate_sources':duplicates,'distinct_content_count':len([s for s in canonical if s['processing_status']=='READY']),
         'recommendations':sorted(recommendations,key=lambda a:-a.get('ranking_score',0)),
         'research':case.research_results,'research_calls':case.research_calls,
-        'graph':case_graph(case.id,case.title,source_map,claims,findings,evidence,case.research_results)}
+        'graph':enrich_recruitment_graph(case_graph(case.id,case.title,source_map,claims,findings,evidence,case.research_results),claims,notice_review,case.id)}

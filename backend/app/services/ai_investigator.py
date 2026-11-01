@@ -13,8 +13,8 @@ def answer_investigator_query(
     q_clean = question.lower().strip()
     evidence_list = scan_detail.get("evidence", [])
     checks = scan_detail.get("verification_results", [])
-    trust_score = scan_detail.get("trust_score", 50)
-    risk_level = scan_detail.get("risk_level", "MODERATE RISK")
+    trust_score = scan_detail.get("trust_score")
+    risk_level = scan_detail.get("risk_level", "UNDETERMINED")
     claimed_org = scan_detail.get("claimed_organization", "the claimed organization")
     primary_domain = scan_detail.get("primary_domain", "the submitted domain")
     
@@ -24,16 +24,16 @@ def answer_investigator_query(
     if any(k in q_clean for k in ["why", "suspicious", "risky", "danger", "red flag"]):
         critical_evs = [e for e in evidence_list if e.get("severity") in ["critical", "high"]]
         if not critical_evs:
-            answer = f"This opportunity received a Trust Score of {trust_score}/100 ({risk_level}). No critical red flags were observed during scanning."
+            answer = f"Assessment: {risk_level}. No critical red flags were observed; independent offer verification remains unresolved. Absence of concerns does not establish safety."
         else:
             bullets = []
             for ev in critical_evs[:3]:
                 bullets.append(f"• {ev.get('evidence')}: {ev.get('explanation')}")
                 referenced_evidence.append(ev.get("evidence"))
             answer = (
-                f"This opportunity is flagged as **{risk_level}** (Trust Score: {trust_score}/100) due to several key forensic indicators:\n\n"
+                f"This opportunity is flagged as **{risk_level}** due to several key forensic indicators:\n\n"
                 + "\n\n".join(bullets) +
-                "\n\nEach of these signals contradicts standard enterprise recruitment practices."
+                "\n\nThese observed concerns warrant investigation; they do not independently prove fraud."
             )
         confidence_note = "Grounded directly in observed scan evidence."
 
@@ -102,7 +102,7 @@ def answer_investigator_query(
     # 7. Fallback / Insufficient evidence
     else:
         answer = (
-            f"Based on the evidence collected for this opportunity (Trust Score: {trust_score}/100, {risk_level}): "
+            f"Based on the evidence collected for this opportunity ({risk_level}; offer verification unresolved): "
             f"Consult the recorded findings and unavailable checks for this submission. "
             f"If you need specific details, ask me 'Why is this suspicious?', 'Is the company genuine?', or 'What should I verify?'"
         )

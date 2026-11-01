@@ -44,9 +44,12 @@ def open_connection(parsed,address,timeout):
     return http.client.HTTPConnection(address,port=parsed.port or 80,timeout=timeout)
 
 
-def fetch_public_text_sync(url):
+def fetch_public_text_sync(url,allow_pdf=False,allowed_domains=None):
     deadline=time.monotonic()+TOTAL_TIMEOUT;current=url;chain=[]
     for redirect in range(MAX_REDIRECTS+1):
+        if allowed_domains:
+            from app.services.notice_verification import trusted_host
+            if not trusted_host(current,allowed_domains):raise URLFetchError('URL_REDIRECT_BLOCKED','Document retrieval left the independently established HTTPS website boundary.')
         parsed,addresses=validate_public_target(current,resolve=True)
         remaining=deadline-time.monotonic()
         if remaining<=0:raise URLFetchError('URL_TIMEOUT','URL fetch exceeded its time limit.')
@@ -57,7 +60,7 @@ def fetch_public_text_sync(url):
             host=parsed.hostname.encode('idna').decode()
             if ':' in host:host='['+host+']'
             if parsed.port:host+=':'+str(parsed.port)
-            connection.request('GET',path,headers={'Host':host,'User-Agent':'FakeOrRealInvestigation/1.0','Accept':'text/html,text/plain','Accept-Encoding':'identity'})
+            connection.request('GET',path,headers={'Host':host,'User-Agent':'FakeOrRealInvestigation/1.0','Accept':'text/html,text/plain,application/pdf' if allow_pdf else 'text/html,text/plain','Accept-Encoding':'identity'})
             response=connection.getresponse();chain.append(current)
             if response.status in {301,302,303,307,308}:
                 location=response.getheader('Location')
@@ -69,32 +72,38 @@ def fetch_public_text_sync(url):
             if response.getheader('Content-Encoding','identity').lower()!='identity':
                 raise URLFetchError('URL_ENCODING_UNSUPPORTED','Compressed response rejected by the bounded fetcher.')
             mime=response.getheader('Content-Type','').split(';')[0].lower()
-            if mime not in {'text/html','text/plain','application/xhtml+xml'}:
+            if mime not in ({'text/html','text/plain','application/xhtml+xml','application/pdf'} if allow_pdf else {'text/html','text/plain','application/xhtml+xml'}):
                 raise URLFetchError('URL_CONTENT_TYPE','URL did not return supported readable HTML/text.')
+            limit=2*1024*1024 if allow_pdf and mime=='application/pdf' else MAX_BYTES
             length=response.getheader('Content-Length')
-            if length and (not length.isdigit() or int(length)>MAX_BYTES):raise URLFetchError('URL_TOO_LARGE','URL response exceeds the 512 KiB limit.')
+            if length and (not length.isdigit() or int(length)>limit):raise URLFetchError('URL_TOO_LARGE','URL response exceeds the bounded document size limit.')
             data=bytearray()
-            while len(data)<=MAX_BYTES:
+            while len(data)<=limit:
                 remaining=deadline-time.monotonic()
                 if remaining<=0:raise URLFetchError('URL_TIMEOUT','URL fetch exceeded its time limit.')
                 if connection.sock:connection.sock.settimeout(min(4,remaining))
-                chunk=response.read(min(16384,MAX_BYTES+1-len(data)))
+                chunk=response.read(min(16384,limit+1-len(data)))
                 if not chunk:break
                 data.extend(chunk)
-            if len(data)>MAX_BYTES:raise URLFetchError('URL_TOO_LARGE','URL response exceeds the 512 KiB limit.')
-            text=data.decode('utf-8',errors='replace')
-            if mime!='text/plain':
+            if len(data)>limit:raise URLFetchError('URL_TOO_LARGE','URL response exceeds the bounded document size limit.')
+            if mime=='application/pdf':
+                from app.documents.pdf_analyzer import analyze_pdf_document
+                parsed_pdf=analyze_pdf_document(bytes(data),'independently-retrieved.pdf')
+                if not parsed_pdf.get('num_pages') or not parsed_pdf.get('text','').strip():raise URLFetchError('URL_PDF_NO_TEXT','Retrieved PDF contained no readable text.')
+                text=parsed_pdf['text']
+            else:text=data.decode('utf-8',errors='replace')
+            if mime not in {'text/plain','application/pdf'}:
                 soup=BeautifulSoup(text,'html.parser')
                 for element in soup(['script','style','noscript']):element.decompose()
                 text=soup.get_text('\n',strip=True)
             if not text.strip():raise URLFetchError('URL_NO_TEXT','No readable text returned by the page.')
-            return {'text':text[:50000],'final_url':current,'redirect_chain':chain,'truncated':len(text)>50000,'bytes_read':len(data)}
+            return {'text':text[:50000],'final_url':current,'redirect_chain':chain,'truncated':len(text)>50000,'bytes_read':len(data),'content_type':mime}
         except URLFetchError:raise
         except (TimeoutError,socket.timeout):raise URLFetchError('URL_TIMEOUT','URL connection/read timed out.')
         except Exception:raise URLFetchError('URL_UNAVAILABLE','URL could not be retrieved securely.')
         finally:connection.close()
 
 
-async def fetch_public_text(url):
-    try:return await asyncio.wait_for(asyncio.to_thread(fetch_public_text_sync,url),timeout=TOTAL_TIMEOUT+1)
+async def fetch_public_text(url,allow_pdf=False,allowed_domains=None):
+    try:return await asyncio.wait_for(asyncio.to_thread(fetch_public_text_sync,url,allow_pdf,allowed_domains),timeout=TOTAL_TIMEOUT+1)
     except asyncio.TimeoutError:raise URLFetchError('URL_TIMEOUT','URL fetch exceeded its total time limit.')

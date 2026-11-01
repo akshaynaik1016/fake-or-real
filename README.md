@@ -1,5 +1,15 @@
 # FAKE OR REAL — evidence-based investigation
 
+Current accuracy/integrity update: **241 backend tests**, **9 frontend tests**, and
+the TypeScript/production build pass. `/challenge` runs three reproducible synthetic
+examples through the real case pipeline. The 45-case synthetic benchmark measures
+concern/abstention behavior separately from focused extraction; its development-set
+results are not real-world accuracy. Normal-looking unverified offers are
+Undetermined. No model is required. See ACCURACY_INTEGRITY_REPORT.md for root causes,
+metrics, API compatibility changes, exact files and remaining limits. Earlier test
+counts below are historical.
+
+
 The existing React/FastAPI application has been upgraded in place. Deterministic
 forensic scanners, bounded Tavily research, Evidence Fusion, TrustGraph and Next
 Best Investigation run without an LLM. **No Gemma, Ollama, hosted LLM, GPU or
@@ -136,3 +146,21 @@ runs through existing scanners. Missing external services remain unresolved.
 Latest validation: 187 backend cases passed, 5 frontend logic tests passed, TypeScript
 and production build passed. See MULTI_SOURCE_WORKSPACE.md for API, run commands,
 exact changed files, migration checks, browser verification and known limitations.
+
+
+## Context-aware recruitment verification
+
+Application fees, stipends, contractual liabilities and normal account instructions now
+retain contextual classifications and exact page references. Repeated payment facts
+share one finding. Recruitment results show found claims, distinct concerns, scoped
+verification, unknowns and next steps. Exact-advertisement corroboration is optional:
+`verify_notice` uses configured Tavily plus `CASE_URL_FETCH_ENABLED=true` to retrieve
+bounded full documents on a trusted website; snippets and company existence cannot
+verify an offer. The core still runs with no model or external keys.
+
+The original 16-page BEL regression changed from risk index 95/nine critical findings
+to Undetermined/zero critical findings. A real EWS fee/exemption inconsistency remains
+cited for clarification. The notice was not authenticated. Latest validation: 297
+backend tests, 12 frontend logic tests and TypeScript/Vite build passed. See
+CONTEXT_AWARE_VERIFICATION_REPORT.md for root causes, exact files, commands and limits.
+Earlier validation counts above describe earlier versions.

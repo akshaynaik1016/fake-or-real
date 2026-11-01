@@ -39,7 +39,11 @@ async def _persist_and_format_scan(
     db.add(new_scan)
     db.flush()
     state = scan_result["investigation"]
+    state['source_id']=new_scan.id
+    from app.services.case_claims import extract_claims
+    state['claims']=extract_claims(new_scan.id,content,input_type)
     for ev in state["evidence"]:
+        ev['source_id']=new_scan.id
         # Canonical investigation IDs are retained in the snapshot; legacy rows keep
         # their own globally unique primary keys for backwards-compatible queries.
         db.add(ScanEvidence(scan_id=new_scan.id, category=ev["category"], severity=ev["severity"],
@@ -48,6 +52,8 @@ async def _persist_and_format_scan(
         db.add(VerificationResult(scan_id=new_scan.id, **chk))
     from app.models.all_models import AuditLog
     db.add(AuditLog(user_id=user_id, action="SCAN_COMPLETED", details={"scan_id": new_scan.id, "synthetic": synthetic}))
+    from app.agents.investigation_orchestrator import refresh_investigation
+    state=refresh_investigation(state)
     save_state(db, new_scan, state)
     if commit: db.commit()
     else: db.flush()
@@ -155,6 +161,9 @@ async def analyze_pdf_endpoint(
     if category != "pdf":
         raise HTTPException(400, "Expected a PDF file")
     pdf_result = analyze_pdf_document(file_bytes, file.filename)
+    if not pdf_result.get('num_pages') or not pdf_result.get('text','').strip():
+        raise HTTPException(422,{'stage':'pdf_extraction','code':'PDF_NO_READABLE_TEXT','message':'PDF could not be parsed or contained no readable text. No forensic findings were generated.'})
+    if len(pdf_result['text'])>50000:raise HTTPException(422,{'stage':'pdf_extraction','code':'PDF_TEXT_TOO_LONG','message':'PDF exceeds 50,000 extracted characters; split it into smaller sources.'})
     extracted_text = pdf_result["text"]
     
     return await _persist_and_format_scan(

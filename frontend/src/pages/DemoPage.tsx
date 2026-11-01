@@ -26,7 +26,7 @@ export const DemoPage: React.FC = () => {
     {
       id: "demo-genuine-tcs-opportunity",
       title: "Synthetic TCS NextStep comparison",
-      expectedRisk: "LOW RISK",
+      expectedRisk: "UNDETERMINED",
       category: "internship",
       badge: "Legitimate Baseline",
       description: "Synthetic comparison using a bundled domain reference. No live corporate registry, sender or offer authorization is asserted.",
@@ -92,6 +92,7 @@ export const DemoPage: React.FC = () => {
 
   return (
     <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto space-y-8">
+      <a href="/challenge" className="block rounded-xl p-4 border border-cyan-500 text-cyan-200">Open Evidence Challenge — run three synthetic cases through the real pipeline</a>
       <p className="p-4 text-amber-200 text-sm">Synthetic demonstration offers. Fixture findings are labelled and excluded from evidence fusion. Tavily is live only when configured; no LLM is required.</p>
       
       {/* Banner */}

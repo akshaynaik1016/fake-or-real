@@ -1,4 +1,5 @@
 import { fetchJson } from '../api/client';
+import {riskIndex} from '../components/common/assessmentSemantics';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { History, Search, Filter, Globe, ArrowRight, ShieldCheck, AlertOctagon } from 'lucide-react';
@@ -72,10 +73,8 @@ export const HistoryPage: React.FC = () => {
             className="bg-cyber-surface border border-cyber-border text-slate-300 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:border-cyber-cyan"
           >
             <option value="ALL">All Risk Tiers</option>
-            <option value="LOW">Low Risk</option>
-            <option value="MODERATE">Moderate Risk</option>
-            <option value="HIGH">High Risk</option>
-            <option value="CRITICAL">Critical Risk</option>
+            <option value="UNDETERMINED">Undetermined</option>
+            <option value="ELEVATED CONCERN">Elevated concern</option>
           </select>
         </div>
       </div>
@@ -106,7 +105,7 @@ export const HistoryPage: React.FC = () => {
                   <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-slate-400 font-mono">
                     <span>Input: {sc.input_type.toUpperCase()}</span>
                     <span>•</span>
-                    <span>Confidence: {sc.analysis_confidence}%</span>
+                    <span>Heuristic reliability: {sc.analysis_confidence}/100</span>
                     <span>•</span>
                     <span>{new Date(sc.created_at).toLocaleDateString()}</span>
                   </div>
@@ -115,8 +114,8 @@ export const HistoryPage: React.FC = () => {
 
               <div className="flex items-center space-x-4 self-end sm:self-center flex-shrink-0">
                 <div className="text-right">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Trust Score</span>
-                  <span className="font-mono text-base font-extrabold text-white">{sc.trust_score}/100</span>
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Concern index</span>
+                  <span className="font-mono text-base font-extrabold text-white">{riskIndex(sc.trust_score,sc.risk_level)}</span>
                 </div>
                 <RiskBadge level={sc.risk_level} size="sm" />
                 <ArrowRight className="w-4 h-4 text-slate-500 group-hover:text-cyber-cyan transition-colors" />

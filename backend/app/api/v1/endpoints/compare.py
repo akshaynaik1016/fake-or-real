@@ -11,7 +11,7 @@ async def compare_opportunities(req: ComparisonRequest, db: Session = Depends(ge
     a = await scan_response(db, req.scan_id_a)
     b = await scan_response(db, req.scan_id_b)
     return ComparisonResponse(opportunity_a=ScanDetailResponse(**a), opportunity_b=ScanDetailResponse(**b),
-        comparison_summary="Compare recorded evidence and coverage. A higher legacy trust score does not authenticate an offer.",
-        safer_choice=a["target_identifier"] if a["trust_score"] >= b["trust_score"] else b["target_identifier"],
+        comparison_summary="Compare recorded evidence and coverage. Risk and independent verification are separate; missing evidence is unresolved.",
+        safer_choice="Undetermined — compare cited concerns; neither offer is authenticated",
         key_differences=[{"dimension": key, "opportunity_a": a[key], "opportunity_b": b[key]}
                          for key in ("trust_score", "risk_level", "analysis_confidence")])

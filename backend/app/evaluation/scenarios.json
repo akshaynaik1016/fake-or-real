@@ -1,0 +1,1309 @@
+{
+  "name": "Synthetic opportunity integrity benchmark",
+  "version": 1,
+  "synthetic": true,
+  "purpose": "Regression evaluation of extraction and concern/abstention policy, not real-world fraud accuracy. Labels are observable concern expectations, not authenticity ground truth.",
+  "scenarios": [
+    {
+      "id": "poster-aexon",
+      "synthetic": true,
+      "category": "unverified_poster",
+      "description": "unverified poster",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "AEXON TECH\nINTERNSHIP PROGRAM\nRole: Software engineering intern\nStipend INR 15,000 per month.\nDuration: 3 months"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "organization"
+        ]
+      },
+      "challenge": "A"
+    },
+    {
+      "id": "stipend-fee",
+      "synthetic": true,
+      "category": "mixed_amounts",
+      "description": "mixed amounts",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "AEXON TECH\nSoftware engineering internship. Your stipend will be ₹45,000 per month. To confirm your position, pay a refundable registration fee of ₹999."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "45000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          },
+          {
+            "type": "fee",
+            "value": {
+              "value": "999",
+              "currency": "INR",
+              "category": "REGISTRATION_FEE",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee",
+          "organization"
+        ]
+      },
+      "challenge": "B"
+    },
+    {
+      "id": "stipend-conflict",
+      "synthetic": true,
+      "category": "cross_source",
+      "description": "cross source",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic offer letter transcript",
+          "content": "Company: AEXON TECH\nInternship stipend INR 15,000 per month."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic recruiter message",
+          "content": "Company: AEXON TECH\nInternship stipend INR 25,000 per month."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "25000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation"
+        ],
+        "cross_kind": "COMPENSATION_CONFLICT"
+      },
+      "challenge": "C"
+    },
+    {
+      "id": "new-company",
+      "synthetic": true,
+      "category": "unknown_organization",
+      "description": "unknown organization",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: Riverstone Learning\nInternship applications open. Send your resume."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "Riverstone Learning"
+          },
+          {
+            "type": "opportunity_type",
+            "value": "internship"
+          }
+        ],
+        "extraction_scope": [
+          "opportunity_type",
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "no-details",
+      "synthetic": true,
+      "category": "missing_information",
+      "description": "missing information",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship applications open. Contact the placement office."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "opportunity_type",
+            "value": "internship"
+          }
+        ],
+        "extraction_scope": [
+          "organization",
+          "opportunity_type",
+          "fee",
+          "compensation"
+        ]
+      }
+    },
+    {
+      "id": "scholarship",
+      "synthetic": true,
+      "category": "unverified_scholarship",
+      "description": "unverified scholarship",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Organization: Banyan Foundation\nScholarship INR 20,000 per year."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "Banyan Foundation"
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "20000",
+              "currency": "INR",
+              "category": "SCHOLARSHIP",
+              "period": "year"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "salary-only",
+      "synthetic": true,
+      "category": "compensation",
+      "description": "compensation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: River Labs\nJob offer. Salary Rs. 60,000 per month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "60000",
+              "currency": "INR",
+              "category": "SALARY",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "fee-first",
+      "synthetic": true,
+      "category": "mixed_amounts",
+      "description": "mixed amounts",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Pay INR 999 registration fee. The monthly stipend is Rs. 45,000."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "999",
+              "currency": "INR",
+              "category": "REGISTRATION_FEE",
+              "period": null
+            }
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "45000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "same-clause",
+      "synthetic": true,
+      "category": "mixed_amounts",
+      "description": "mixed amounts",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Stipend ₹45,000 and registration fee ₹999."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "45000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": null
+            }
+          },
+          {
+            "type": "fee",
+            "value": {
+              "value": "999",
+              "currency": "INR",
+              "category": "REGISTRATION_FEE",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "training-deposit",
+      "synthetic": true,
+      "category": "payment",
+      "description": "payment",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Pay Rs. 1,500 training fee before joining."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "1500",
+              "currency": "INR",
+              "category": "TRAINING_FEE",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "security-deposit",
+      "synthetic": true,
+      "category": "payment",
+      "description": "payment",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "A security deposit of INR 2,000 is required."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "2000",
+              "currency": "INR",
+              "category": "SECURITY_DEPOSIT",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "refundable-deposit",
+      "synthetic": true,
+      "category": "payment",
+      "description": "payment",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Refundable deposit: ₹750."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "750",
+              "currency": "INR",
+              "category": "REFUNDABLE_DEPOSIT",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "processing-fee",
+      "synthetic": true,
+      "category": "payment",
+      "description": "payment",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Processing fee Rs. 499 must be paid."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "499",
+              "currency": "INR",
+              "category": "PROCESSING_FEE",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "no-fee",
+      "synthetic": true,
+      "category": "negation",
+      "description": "negation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship. No registration fee is charged. Stipend INR 12,000/month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "12000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "zero-fee",
+      "synthetic": true,
+      "category": "negation",
+      "description": "negation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Registration fee INR 0. Internship stipend INR 8,000/month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "8000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "ambiguous-amount",
+      "synthetic": true,
+      "category": "ambiguity",
+      "description": "ambiguity",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "INR 999 may be a stipend or fee; ask the organizer before deciding."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "fee",
+          "compensation"
+        ]
+      }
+    },
+    {
+      "id": "unlabelled-amounts",
+      "synthetic": true,
+      "category": "ambiguity",
+      "description": "ambiguity",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship. INR 15,000 and INR 999 are mentioned without explanation."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "fee",
+          "compensation"
+        ]
+      }
+    },
+    {
+      "id": "range-stipend",
+      "synthetic": true,
+      "category": "ambiguity",
+      "description": "ambiguity",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Stipend INR 10,000 or INR 15,000 depending on hours."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "compensation",
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "fee-question",
+      "synthetic": true,
+      "category": "ambiguity",
+      "description": "ambiguity",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Is a registration fee of INR 999 required?"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "fee",
+            "value": {
+              "value": "999",
+              "currency": "INR",
+              "category": "REGISTRATION_FEE",
+              "period": null
+            }
+          }
+        ],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "personal-email",
+      "synthetic": true,
+      "category": "personal_channel",
+      "description": "personal channel",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nRecruiter: Riya Sen\nFrom: Riya HR <riya.careers@gmail.com>\nInternship: apply by email with your resume."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "recruiter_name",
+            "value": "Riya Sen"
+          },
+          {
+            "type": "sender_email",
+            "value": "riya.careers@gmail.com"
+          }
+        ],
+        "extraction_scope": [
+          "recruiter_name",
+          "sender_email"
+        ]
+      }
+    },
+    {
+      "id": "brand-personal-email",
+      "synthetic": true,
+      "category": "personal_channel",
+      "description": "personal channel",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Microsoft internship shared by a campus volunteer. From: Microsoft campus volunteer <student@gmail.com>\nPlease check the original listing yourself."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "sender_email",
+            "value": "student@gmail.com"
+          }
+        ],
+        "extraction_scope": [
+          "sender_email"
+        ]
+      }
+    },
+    {
+      "id": "dm-application",
+      "synthetic": true,
+      "category": "personal_channel",
+      "description": "personal channel",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: River Labs\nInternship: apply via DM with a portfolio."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "application_method",
+            "value": {
+              "channel": "dm",
+              "exclusive": false
+            }
+          }
+        ],
+        "extraction_scope": [
+          "application_method"
+        ]
+      }
+    },
+    {
+      "id": "header-only",
+      "synthetic": true,
+      "category": "unverified_headers",
+      "description": "unverified headers",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "From: Riya <riya@example.org>\nAuthentication-Results: example.org; spf=pass; dkim=pass\n\nInternship details available."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "sender_email",
+            "value": "riya@example.org"
+          }
+        ],
+        "extraction_scope": [
+          "sender_email"
+        ]
+      }
+    },
+    {
+      "id": "brand-lookalike",
+      "synthetic": true,
+      "category": "impersonation",
+      "description": "impersonation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Microsoft internship. Apply via https://microsoft-careers-india.xyz/join"
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "Microsoft Corporation"
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "brand-subdomain",
+      "synthetic": true,
+      "category": "impersonation",
+      "description": "impersonation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Google internship https://google.com.security-check.example.xyz/apply"
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "Google LLC / Alphabet Inc."
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "official-domain",
+      "synthetic": true,
+      "category": "reference_not_authentication",
+      "description": "reference not authentication",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Microsoft internship: https://careers.microsoft.com/jobs"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "Microsoft Corporation"
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "unknown-domain",
+      "synthetic": true,
+      "category": "external_unavailable",
+      "description": "external unavailable",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship https://aexon.example/jobs"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "urgency",
+      "synthetic": true,
+      "category": "pressure",
+      "description": "pressure",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship offer expires today. Confirm within 2 hours."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "urgency",
+            "value": "offer expires today"
+          },
+          {
+            "type": "urgency",
+            "value": "within 2 hours"
+          }
+        ],
+        "extraction_scope": [
+          "urgency"
+        ]
+      }
+    },
+    {
+      "id": "otp-request",
+      "synthetic": true,
+      "category": "sensitive_request",
+      "description": "sensitive request",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "To join the internship, share your OTP."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [
+          {
+            "type": "sensitive_data_request",
+            "value": {
+              "item": "OTP (One-Time Password)",
+              "tier": "CRITICAL"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "sensitive_data_request"
+        ]
+      }
+    },
+    {
+      "id": "id-request",
+      "synthetic": true,
+      "category": "sensitive_request",
+      "description": "sensitive request",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship applicants must upload Aadhaar card and PAN card."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "sensitive_data_request",
+            "value": {
+              "item": "Aadhaar Card / Number",
+              "tier": "MEDIUM"
+            }
+          },
+          {
+            "type": "sensitive_data_request",
+            "value": {
+              "item": "PAN Card",
+              "tier": "MEDIUM"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "sensitive_data_request"
+        ]
+      }
+    },
+    {
+      "id": "otp-warning",
+      "synthetic": true,
+      "category": "negation",
+      "description": "negation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship safety guidance: never share your OTP or UPI PIN."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "sensitive_data_request"
+        ]
+      }
+    },
+    {
+      "id": "no-documents",
+      "synthetic": true,
+      "category": "negation",
+      "description": "negation",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship: do not submit Aadhaar or PAN card. Only submit your resume."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "fee"
+        ]
+      }
+    },
+    {
+      "id": "ocr-digits",
+      "synthetic": true,
+      "category": "ocr_noise",
+      "description": "ocr noise",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "AEX0N TECH\nINTERNSHIP\nStipend INR 15,000 per month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEX0N TECH"
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "ocr-spaces",
+      "synthetic": true,
+      "category": "ocr_noise",
+      "description": "ocr noise",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON   TECH\nInternship Stipend Rs. 15,000 per month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation",
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "ocr-incomplete",
+      "synthetic": true,
+      "category": "ocr_noise",
+      "description": "ocr noise",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "AEX?N T?CH\nINTERNSH1P\nST1PEND I5OOO"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [
+          "organization",
+          "compensation",
+          "opportunity_type"
+        ]
+      }
+    },
+    {
+      "id": "duplicate-posters",
+      "synthetic": true,
+      "category": "duplicate",
+      "description": "duplicate",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Copy one",
+          "content": "Company: AEXON TECH\nInternship stipend INR 15,000 per month."
+        },
+        {
+          "input_type": "text",
+          "title": "Copy two",
+          "content": "Company: AEXON TECH\nInternship stipend INR 15,000 per month."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          },
+          {
+            "type": "compensation",
+            "value": {
+              "value": "15000",
+              "currency": "INR",
+              "category": "STIPEND",
+              "period": "month"
+            }
+          }
+        ],
+        "extraction_scope": [
+          "compensation"
+        ],
+        "duplicates": 1
+      }
+    },
+    {
+      "id": "duration-conflict",
+      "synthetic": true,
+      "category": "cross_source",
+      "description": "cross source",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship duration: 3 months"
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship duration: 6 months"
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "DURATION_CONFLICT"
+      }
+    },
+    {
+      "id": "new-fee-source",
+      "synthetic": true,
+      "category": "new_information",
+      "description": "new information",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship stipend INR 15,000 per month."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nPay registration fee INR 999."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "NEW_PAYMENT_REQUEST"
+      }
+    },
+    {
+      "id": "missing-stipend-source",
+      "synthetic": true,
+      "category": "missing_information",
+      "description": "missing information",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship stipend INR 15,000 per month."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship: send a portfolio."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": []
+      }
+    },
+    {
+      "id": "channel-conflict",
+      "synthetic": true,
+      "category": "cross_source",
+      "description": "cross source",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship apply only via email."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship apply only via WhatsApp."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "APPLICATION_METHOD_CONFLICT"
+      }
+    },
+    {
+      "id": "period-difference",
+      "synthetic": true,
+      "category": "ambiguity",
+      "description": "ambiguity",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship stipend INR 15000 per month."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Internship stipend INR 25000 per year."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "COMPENSATION_CONFLICT"
+      }
+    },
+    {
+      "id": "fee-policy-conflict",
+      "synthetic": true,
+      "category": "cross_source",
+      "description": "cross source",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship. No registration fee."
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nPay registration fee INR 999."
+        }
+      ],
+      "expected": {
+        "state": "ELEVATED_CONCERN",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "FEE_INSTRUCTION_CONFLICT"
+      }
+    },
+    {
+      "id": "domain-discrepancy",
+      "synthetic": true,
+      "category": "cross_source",
+      "description": "cross source",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nRecruitment email: hr@aexon.example"
+        },
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nRecruitment email: recruiter@river.example"
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [],
+        "extraction_scope": [],
+        "cross_kind": "SENDER_EMAIL_CONFLICT"
+      }
+    },
+    {
+      "id": "search-timeout",
+      "synthetic": true,
+      "category": "external_failure",
+      "description": "Provider timeout is injected by the evaluator; no successful verification may be fabricated.",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship opportunities."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    },
+    {
+      "id": "search-unconfigured",
+      "synthetic": true,
+      "category": "external_unavailable",
+      "description": "Unconfigured provider returns unavailable; offer verification stays unresolved.",
+      "sources": [
+        {
+          "input_type": "text",
+          "title": "Synthetic source",
+          "content": "Company: AEXON TECH\nInternship opportunities."
+        }
+      ],
+      "expected": {
+        "state": "UNDETERMINED",
+        "claims": [
+          {
+            "type": "organization",
+            "value": "AEXON TECH"
+          }
+        ],
+        "extraction_scope": [
+          "organization"
+        ]
+      }
+    }
+  ]
+}

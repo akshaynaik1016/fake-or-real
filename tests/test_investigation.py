@@ -43,7 +43,7 @@ def submit(content=OFFER):
 
 def test_empty_evidence_has_no_safe_verdict_or_confidence_floor():
     r = fuse_evidence([], [{"name": "Research", "completed": False}])
-    assert r["risk_level"] == "INSUFFICIENT_INFORMATION"
+    assert r["risk_level"] == "UNDETERMINED"
     assert r["risk_score"] is None
     assert r["confidence"] == r["evidence_coverage"] == 0
     assert r["unknowns"]

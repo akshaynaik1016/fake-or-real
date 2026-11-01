@@ -57,8 +57,8 @@ def fuse_evidence(evidence: list[dict], checks: list[dict], config: FusionConfig
             "reason": "Strongest observation in correlation group" if used else
                 "Excluded: correlated, synthetic, unavailable or unverified external interpretation"})
     score = round(100 / (1 + math.exp(-max(-40, min(40, log_odds)))))
-    sufficient = len(groups) >= 2 or any(e["severity"] in {"critical", "high"} for e in eligible)
-    level = "INSUFFICIENT_INFORMATION" if not sufficient else (
+    sufficient = any(e["severity"] in {"critical", "high"} for e in eligible)
+    level = "UNDETERMINED" if not sufficient else (
         "CRITICAL" if score >= 80 else "HIGH" if score >= 60 else "MODERATE" if score >= 35 else "LOW")
     contradiction = any(any(r["severity"] == "verified" for r in rows) and
                         any(r["severity"] in {"high", "critical"} for r in rows) for rows in groups.values())
@@ -66,7 +66,7 @@ def fuse_evidence(evidence: list[dict], checks: list[dict], config: FusionConfig
     confidence = round(min(95, len(groups) * 18) * reliability * (0.7 if contradiction else 1))
     if contradiction:
         unknowns.append("Conflicting observations in the same correlation group require independent verification")
-    return {"assessment_mode": mode, "risk_level": level, "risk_score": score if eligible else None,
+    return {"assessment_mode": mode, "risk_level": level, "risk_score": score if sufficient else None,
         "confidence": confidence, "evidence_coverage": coverage,
         "prior": config.prior, "calibration_reference": config.calibration_reference,
         "evidence_updates": updates,

@@ -1,4 +1,5 @@
 import { fetchJson, downloadReport } from '../api/client';
+import {riskIndex} from '../components/common/assessmentSemantics';
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
@@ -63,8 +64,8 @@ export const TrustPassportPage: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4 pt-3 border-t border-cyber-border/60">
             <div>
-              <span className="text-[10px] font-mono uppercase text-slate-400 block">Trust Score</span>
-              <p className="text-3xl font-black font-mono text-white mt-0.5">{passport.trust_score}/100</p>
+              <span className="text-[10px] font-mono uppercase text-slate-400 block">Concern index</span>
+              <p className="text-3xl font-black font-mono text-white mt-0.5">{riskIndex(passport.trust_score,passport.risk_level)}</p>
             </div>
             <div>
               <span className="text-[10px] font-mono uppercase text-slate-400 block">Risk Tier</span>

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertOctagon, AlertTriangle, Info, CheckCircle, Database } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertOctagon, AlertTriangle, Info, Database } from 'lucide-react';
 import { EvidenceItem } from '../../api/client';
 
 interface EvidenceCardProps {
   evidence: EvidenceItem;
+  anchorPrefix?:string;
 }
 
-export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
+export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence,anchorPrefix="evidence" }) => {
   const [expanded, setExpanded] = useState(false);
   const sev = evidence.severity.toLowerCase();
 
-  let badgeColor = 'bg-emerald-950/40 text-emerald-400 border-emerald-500/40';
-  let Icon = CheckCircle;
-  let borderHighlight = 'hover:border-emerald-500/50';
+  let badgeColor = 'bg-cyan-950/40 text-cyan-300 border-cyan-500/40';
+  let Icon = Info;
+  let borderHighlight = 'hover:border-cyan-500/50';
 
   if (sev === 'critical') {
     badgeColor = 'bg-rose-950/60 text-rose-400 border-rose-500/60';
@@ -32,7 +33,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
   }
 
   return (
-    <div id={`evidence-${evidence.id}`} className={`scroll-mt-8 p-4 rounded-xl glass-card transition-all duration-200 border border-cyber-border ${borderHighlight}`}>
+    <div id={`${anchorPrefix}-${evidence.id}`} className={`scroll-mt-8 p-4 rounded-xl glass-card transition-all duration-200 border border-cyber-border ${borderHighlight}`}>
       {/* Header bar */}
       <div 
         className="flex items-start justify-between cursor-pointer select-none"
@@ -43,7 +44,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
           <div>
             <div className="flex items-center space-x-2">
               <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${badgeColor}`}>
-                {evidence.severity}
+                {evidence.severity==='verified'?'Reference observation':evidence.severity}
               </span>
               <span className="text-xs font-mono text-slate-400">
                 {evidence.category.replace(/_/g, ' ').toUpperCase()}
@@ -63,12 +64,16 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
         </button>
       </div>
 
+      <p className="text-xs text-amber-200 mt-2">{evidence.provenance_kind==='INDEPENDENTLY_RETRIEVED_CONTEXT'?'Retrieved context; not independent verification of this offer.':'Recorded observation/rule output; not independent verification of this offer.'}</p>
+      {(evidence.occurrences||1)>1&&<p className="text-xs text-cyan-300 mt-2">Grouped repeated mentions; all supporting references are retained. Repetition does not add independent confidence.</p>}
       {/* Expandable Body */}
       {expanded && (
         <div className="mt-3 pt-3 border-t border-cyber-border/60 text-xs space-y-2.5">
           <p className="font-mono text-slate-400 break-all">Evidence ID: {evidence.id || 'Legacy'} · {evidence.timestamp || 'Timestamp unavailable'}</p>
           <p>{evidence.origin || 'Legacy provenance'} · {evidence.verification_status || 'UNKNOWN'}</p>
           <p className="break-words">Observed value: {evidence.observed_value || 'Raw match not retained'}</p>
+          {!!evidence.citations?.length&&<details><summary className="cursor-pointer text-cyan-300">Supporting sources ({evidence.citations.length})</summary>{evidence.citations.map((r,i)=><div key={i} className="mt-3 border-l border-cyan-700 pl-3"><blockquote>“{r.excerpt}”</blockquote><p>{r.page?`Page ${r.page} · `:''}characters {r.start}–{r.end}</p>{r.url?<a href={r.url} target="_blank" rel="noopener noreferrer" className="underline text-cyan-300">{r.source_title||'Independent source'}</a>:<p className="break-all">Source {r.source_id}</p>}</div>)}</details>}
+          <p>Source ID: {evidence.source_id || 'See cited sources'} · {evidence.extraction_method || 'Legacy method unknown'}</p>
           <p>Correlation group: {evidence.correlation_group || 'Unknown'}</p>
           {evidence.source_spans?.map((span,i) => <p key={i} className="font-mono break-words">Source characters {span.start}–{span.end}: “{span.text}” ({span.kind})</p>)}
           {evidence.explanation && (
@@ -86,7 +91,7 @@ export const EvidenceCard: React.FC<EvidenceCardProps> = ({ evidence }) => {
               <span>Source: <strong className="text-slate-300">{evidence.source}</strong></span>
             </div>
             <div>
-              <span>Heuristic reliability: <strong className="text-cyber-cyan">{Math.round(evidence.confidence * 100)}%</strong></span>
+              <span>Heuristic reliability index: <strong className="text-cyber-cyan">{Math.round(evidence.confidence * 100)}/100</strong></span>
             </div>
           </div>
         </div>

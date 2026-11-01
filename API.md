@@ -3,9 +3,12 @@
 Base path: `/api`. Full runtime schemas: `/docs` and `/openapi.json`.
 
 Existing analyze, scan, auth, emergency, community, dashboard, comparison, passport
-and report routes remain. Scan responses retain their original fields and add
-`investigation`. Existing weighted trust/risk/confidence fields remain legacy
-baseline values; the new `investigation.fusion` contains the current assessment.
+and report routes remain. Scan responses retain field names and include `investigation` and an explicit
+`assessment`. Primary `risk_level` is ELEVATED CONCERN or UNDETERMINED; `trust_score`
+is nullable and abstains when undetermined. For concern, the deprecated trust field
+is the inverse concern index; `analysis_confidence` is a heuristic fusion reliability
+index. Legacy raw values remain in the stored baseline. Use `assessment` for current
+semantics; risk and authenticity verification are separate.
 
 ## Analyze
 
@@ -104,3 +107,45 @@ scanners run. Source removal is soft removal with assessment recomputation.
 See MULTI_SOURCE_WORKSPACE.md for the full route table, examples, access behavior,
 input limits and source extraction states. Existing analyze/investigation/report
 routes are retained. Alembic head is `0002_multi_source_cases`.
+
+
+## Accuracy integrity and Evidence Challenge
+
+`GET /challenge/scenarios` declares three synthetic inputs and expected findings.
+`POST /challenge/run/{scenario_id}` runs an allowlisted example through the real
+persisted case pipeline and returns actual claims, citations, assessment and pass/fail.
+No analysis result is prefilled. Authentication/ownership rules are unchanged.
+
+Single-source state now includes exact `claims` and `source_id`. Findings add
+provenance fields and retain original excerpts/spans when captured. `completed`
+checks mean a rule ran, not independent verification. Historical passed/verified
+content checks project to completed without changing stored snapshots.
+
+`assessment.state` is ELEVATED_CONCERN or UNDETERMINED; `verification_status` remains
+UNRESOLVED unless a scoped independent record links to an existing claim. The
+positive contract is INDEPENDENTLY_VERIFIED_CLAIM; content/reference/search-snippet
+adapters do not create it, and offer authenticity is never promoted by that contract.
+See ACCURACY_INTEGRITY_REPORT.md for full compatibility details and evaluation.
+
+
+## Context-aware recruitment claims and exact-notice action
+
+Single-scan `investigation` and case assessments add recruitment claims and a
+`notice_review` containing per-claim comparison status, citations, unknowns and retained
+independent document records. Claim values remain submitted claims; claim results may
+be UNRESOLVED, POSSIBLE_INCONSISTENCY, CONTRADICTED or INDEPENDENTLY_CORROBORATED.
+Offer authenticity remains UNRESOLVED even after scoped corroboration.
+
+Existing action routes now support action ID `verify_notice` under the same revision,
+idempotence, ownership and research budget rules. It requires one organization,
+advertisement number and title, a bundled trusted website reference, configured Tavily
+and enabled bounded public retrieval. Unavailable prerequisites return a reason.
+At most two eligible full HTTPS documents are attempted. Search snippets alone cannot
+verify claims. Full official-host documents must uniquely match the exact notice.
+
+Evidence adds `fact_key`, `occurrences`, `payment_context`, `source_ids` and `citations`.
+`source_spans` can include one-based `page`; all offsets reference retained reviewed/
+redacted text. Monetary entities add purpose/role, nearby supporting text, rationale,
+recipient/channel (when explicit) and stated base/GST-total relationships. Repetition
+is grouped while source references remain available. No new migration is required.
+See CONTEXT_AWARE_VERIFICATION_REPORT.md for validation and comparison limits.

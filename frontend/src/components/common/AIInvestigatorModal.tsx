@@ -136,7 +136,7 @@ export const AIInvestigatorModal: React.FC<AIInvestigatorModalProps> = ({ scanId
           {loading && (
             <div className="flex items-center space-x-2.5 text-xs text-cyan-300 p-3 bg-cyber-surface/60 rounded-2xl border border-cyber-border max-w-sm font-mono">
               <Sparkles className="w-4 h-4 animate-spin text-cyber-cyan" />
-              <span>Querying verified forensic evidence graph...</span>
+              <span>Reading recorded evidence and unresolved claims...</span>
             </div>
           )}
           <div ref={messagesEndRef} />

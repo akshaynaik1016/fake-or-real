@@ -188,7 +188,7 @@ async def execute_case_action(db,case,action_id,expected):
     if case.revision!=expected:raise HTTPException(409,'Case changed; reload')
     if action['status']=='COMPLETED':return case.assessment
     if action['status']!='AVAILABLE':raise HTTPException(409,action.get('unavailable_reason') or 'Check unavailable')
-    if action_id=='official_listing':case.research_calls+=1
+    if action_id in {'official_listing','verify_notice'}:case.research_calls+=1
     record_revision(db,case,'CHECK_STARTED:'+action_id,expected,running_action={'action_id':action_id,'started_at':datetime.now(timezone.utc).isoformat()})
     try:
         if action_id.startswith('sender:'):
@@ -201,6 +201,12 @@ async def execute_case_action(db,case,action_id,expected):
                 'action_id':action_id,'status':'UNAVAILABLE','message':'The source was removed while this check ran; its findings were excluded.'},running_action=None)
             source.analysis=deepcopy(state);status=state.get('last_change',{}).get('status','COMPLETED')
             message=state.get('last_change',{}).get('reason','Existing sender reference check inspected.')
+        elif action_id=='verify_notice':
+            from app.services.notice_verification import retrieve_notice
+            result=await retrieve_notice(case.assessment['claims'])
+            db.refresh(case)
+            case.research_results=[*case.research_results,result]
+            status='COMPLETED' if result['status']=='COMPLETED' else 'UNAVAILABLE';message=result['reason']
         else:
             from app.integrations.web_research.tavily_service import TavilyService
             from app.agents.investigation_orchestrator import organization_reference

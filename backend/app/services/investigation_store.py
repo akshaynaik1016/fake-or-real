@@ -1,5 +1,7 @@
 """Durable investigation snapshots; reads never trigger external services."""
 from copy import deepcopy
+from datetime import timezone
+from app.services.assessment_semantics import scan_presentation
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.all_models import Scan, ScanEvidence, VerificationResult, InvestigationState
@@ -18,7 +20,8 @@ def save_state(db: Session, scan: Scan, payload: dict) -> None:
 async def load_state(db: Session, scan: Scan) -> dict:
     record = db.get(InvestigationState, scan.id)
     if record:
-        return deepcopy(record.payload)
+        from app.services.assessment_semantics import integrity_view
+        return integrity_view(record.payload)
     # Backfill historical records using retained observations only. No rescanning.
     evs = db.query(ScanEvidence).filter_by(scan_id=scan.id).all()
     checks = db.query(VerificationResult).filter_by(scan_id=scan.id).all()
@@ -66,8 +69,8 @@ async def scan_response(db: Session, scan_id: str) -> dict:
     return {"id": scan.id, "input_type": scan.input_type, "input_content": scan.input_content,
         "target_identifier": scan.target_identifier, "status": scan.status, "trust_score": scan.trust_score,
         "risk_level": scan.risk_level, "analysis_confidence": scan.analysis_confidence, "summary": scan.summary,
-        "created_at": scan.created_at, "is_demo": scan.is_demo,
+        "created_at": scan.created_at.replace(tzinfo=timezone.utc), "is_demo": scan.is_demo,
         "evidence": state["evidence"], "verification_results": baseline.get("verification_results", []),
         "indicators": baseline.get("indicators", []), "recommended_actions": baseline.get("recommended_actions", []),
         "timeline": baseline.get("timeline", []), "threat_intel_details": baseline.get("threat_intel_details"),
-        "investigation": state}
+        "investigation": state, **scan_presentation(state)}

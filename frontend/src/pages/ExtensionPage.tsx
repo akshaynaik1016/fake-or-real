@@ -1,3 +1,4 @@
+import {riskIndex} from '../components/common/assessmentSemantics';
 import React, { useState } from 'react';
 import { ShieldCheck, AlertOctagon, ExternalLink, Download, ArrowRight, ShieldAlert, CheckCircle2, X } from 'lucide-react';
 import { RiskBadge } from '../components/common/RiskBadge';
@@ -10,24 +11,24 @@ export const ExtensionPage: React.FC = () => {
     url: "https://microsoft-careers-india.xyz/onboard/pay",
     domain: "microsoft-careers-india.xyz",
     organization: "Claimed: Microsoft Corporation",
-    trustScore: 18,
+    trustScore: null,
     riskLevel: "CRITICAL RISK",
-    domainAge: "11 days ago",
+    domainAge: "Not queried",
     paymentRisk: "₹999 Registration Deposit Required",
-    verificationStatus: "Critical Identity Mismatch",
-    threatReports: "Flagged on 2 abuse feeds"
+    verificationStatus: "Unresolved — synthetic illustration",
+    threatReports: "Not queried — no provider result"
   };
 
   const genuineData = {
     url: "https://nextstep.tcs.com/campus/#/register",
     domain: "nextstep.tcs.com",
     organization: "Tata Consultancy Services Limited",
-    trustScore: 94,
-    riskLevel: "LOW RISK",
-    domainAge: "9,800 days ago (1998)",
+    trustScore: null,
+    riskLevel: "UNDETERMINED",
+    domainAge: "Not queried",
     paymentRisk: "No Payment Demanded",
-    verificationStatus: "Verified Corporate Infrastructure",
-    threatReports: "Clean (0 flags)"
+    verificationStatus: "Unresolved — synthetic illustration",
+    threatReports: "Not queried — no provider result"
   };
 
   const current = activeSite === 'fake' ? fakeData : genuineData;
@@ -43,7 +44,7 @@ export const ExtensionPage: React.FC = () => {
         </div>
         <h1 className="text-3xl font-extrabold text-white">Browser Extension & Real-Time Warning</h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl mx-auto">
-          Preview how FAKE OR REAL provides passive, non-intrusive trust indicators and active warnings as users browse online opportunities.
+          Synthetic extension UI preview. No network, threat-feed or authenticity check runs here. Use Analyze or Evidence Challenge to execute the real pipeline.
         </p>
       </div>
 
@@ -74,7 +75,7 @@ export const ExtensionPage: React.FC = () => {
               : 'bg-cyber-surface border border-cyber-border text-slate-400 hover:text-white'
           }`}
         >
-          Simulate Genuine Site (nextstep.tcs.com)
+          Simulate Normal-looking Unverified Site (nextstep.tcs.com)
         </button>
       </div>
 
@@ -115,8 +116,8 @@ export const ExtensionPage: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-mono uppercase text-slate-400">Trust Score</span>
-                <p className="text-3xl font-black font-mono text-white">{current.trustScore}/100</p>
+                <span className="text-[10px] font-mono uppercase text-slate-400">Concern index</span>
+                <p className="text-3xl font-black font-mono text-white">{riskIndex(current.trustScore,current.riskLevel)}</p>
               </div>
               <RiskBadge level={current.riskLevel} size="sm" />
             </div>
@@ -169,7 +170,7 @@ export const ExtensionPage: React.FC = () => {
             
             <p className="text-xs text-rose-200 leading-relaxed">
               Multiple critical risk indicators detected on <strong>microsoft-careers-india.xyz</strong>.
-              Trust Score: <strong>18/100 (CRITICAL RISK)</strong>. This domain is not recognized as official Microsoft infrastructure and requests an upfront fee.
+              Concern index: <strong>Not run (synthetic illustration)</strong>. Synthetic illustration of an upfront-fee concern; no live extension verification is shown here.
             </p>
 
             <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-left text-xs space-y-1.5 text-slate-300">

@@ -3,11 +3,12 @@ import re
 
 
 def verification_summary(checks: list[dict]) -> dict:
-    counts = dict.fromkeys(['verified','failed','warning','unavailable','not_performed'],0)
+    counts = dict.fromkeys(['verified','failed','warning','unavailable','not_performed','completed'],0)
     for check in checks:
-        status = 'verified' if check.get('status') == 'passed' else check.get('status')
+        status = 'completed' if check.get('status') in {'passed','verified'} else check.get('status')
         counts[status if status in counts else 'unavailable'] += 1
     counts['unresolved'] = counts['warning']+counts['unavailable']+counts['not_performed']
+    counts['unresolved'] += counts['completed']
     counts['text'] = f"{counts['failed']} failed · {counts['unresolved']} unresolved · {counts['verified']} verified"
     return counts
 
@@ -32,22 +33,23 @@ def build_verification_checklist(*, content, domain, org, organization, dns, tls
     if not domain: add('SSL','not_performed','No website domain submitted.')
     elif synthetic or (tls or {}).get('is_demo_source'): add('SSL','unavailable','Synthetic TLS fixture; no live certificate verification.')
     elif (tls or {}).get('status') == 'UNAVAILABLE': add('SSL','unavailable','TLS check disabled or unavailable.')
-    elif (tls or {}).get('is_valid'): add('SSL','verified','TLS certificate validated; HTTPS does not authenticate the offer.')
+    elif (tls or {}).get('is_valid'): add('SSL','completed','TLS certificate validated; HTTPS does not authenticate the offer.')
     else: add('SSL','unavailable','No TLS certificate verified.')
     live=[p for p in (threat or {}).get('provider_results',[]) if not p.get('is_demo_intelligence')]
     if not threat: add('Threat Intelligence','not_performed','No target for threat lookup.')
     elif any(p.get('status') == 'FLAGGED' for p in live): add('Threat Intelligence','failed','A live provider flagged the submitted target; inspect provider evidence.')
-    elif any(p.get('status') == 'CLEAN' for p in live): add('Threat Intelligence','verified','Configured provider returned no active match; absence of a match does not prove safety.')
+    elif any(p.get('status') == 'CLEAN' for p in live): add('Threat Intelligence','completed','Configured provider returned no active match; absence of a match does not prove safety.')
     else: add('Threat Intelligence','unavailable','No live threat provider returned a result.')
     if not content.strip(): add('Payment','not_performed','No text to inspect.')
-    elif payment['payment_detected']: add('Payment','failed','Payment-related finding in submitted text. Inspect amount-specific evidence; ambiguous amounts are not inferred.')
-    else: add('Payment','verified','Content rules completed: no payment demand observed. This does not verify the offer.')
+    elif payment.get('elevated_payment_concern'): add('Payment','failed','Payment-related finding in submitted text. Inspect amount-specific evidence; ambiguous amounts are not inferred.')
+    elif payment['payment_detected']: add('Payment','warning','Fee/payment information observed; authorization, amount and destination remain unresolved. Application fees are not automatically fraud.')
+    else: add('Payment','completed','Content rules completed: no payment demand observed. This does not verify the offer.')
     if not document: add('Document','not_performed','No document parser or reviewed OCR content submitted.')
     elif document.get('has_manipulation_indicators'): add('Document','warning','Document metadata indicators require review; editing is not proof of fraud.')
     elif document.get('ocr_status') in {'EMPTY','ERROR','UNAVAILABLE'}: add('Document','warning','Original OCR was incomplete; investigation uses user-entered reviewed text.')
-    else: add('Document','verified','Document text processed; this does not verify issuer identity or authenticity.')
+    else: add('Document','completed','Document text processed; this does not verify issuer identity or authenticity.')
     if sensitive.get('has_critical'): add('Identity','failed','Critical credential-related content observed; inspect the exact request.')
     elif sensitive.get('has_medium'): add('Identity','warning','Government identity document request observed; authorization unresolved.')
-    elif content.strip(): add('Identity','verified','Content rules completed: no sensitive identity request observed.')
+    elif content.strip(): add('Identity','completed','Content rules completed: no sensitive identity request observed.')
     else: add('Identity','not_performed','No text to inspect.')
     return checks

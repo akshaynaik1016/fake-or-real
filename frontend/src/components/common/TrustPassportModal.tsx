@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { ShieldCheck, Award, X, Download, Share2, CheckCircle2, AlertOctagon, Copy, Check } from 'lucide-react';
 import { RiskBadge } from './RiskBadge';
+import {riskIndex} from './assessmentSemantics';
 
 interface TrustPassportModalProps {
   scanId: string;
   opportunityName: string;
-  trustScore: number;
+  trustScore: number|null;
   riskLevel: string;
   confidence: number;
   checksPassed: number;
@@ -69,7 +70,7 @@ export const TrustPassportModal: React.FC<TrustPassportModalProps> = ({
           <h3 className="font-black text-xl tracking-wider text-white uppercase font-sans">
             DIGITAL TRUST PASSPORT
           </h3>
-          <p className="text-xs font-mono text-cyan-400 mt-0.5">Recorded evidence summary · legacy baseline</p>
+          <p className="text-xs font-mono text-cyan-400 mt-0.5">Recorded evidence · authenticity unresolved</p>
         </div>
 
         {error && <p role="alert" className="text-rose-300 text-xs">{error}</p>}
@@ -82,8 +83,8 @@ export const TrustPassportModal: React.FC<TrustPassportModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-cyber-border/60">
             <div>
-              <p className="text-[10px] font-mono uppercase text-slate-400">Trust Score</p>
-              <p className="text-2xl font-black font-mono text-white mt-0.5">{trustScore}/100</p>
+              <p className="text-[10px] font-mono uppercase text-slate-400">Concern index</p>
+              <p className="text-2xl font-black font-mono text-white mt-0.5">{riskIndex(trustScore,riskLevel)}</p>
             </div>
             <div>
               <p className="text-[10px] font-mono uppercase text-slate-400">Risk Assessment</p>
@@ -95,7 +96,7 @@ export const TrustPassportModal: React.FC<TrustPassportModalProps> = ({
 
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-cyber-border/60 text-xs text-slate-300">
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-mono">Checks Passed</span>
+              <span className="text-slate-400 block text-[10px] uppercase font-mono">Content checks completed</span>
               <span className="font-semibold text-white">{checksPassed} of {totalChecks}</span>
             </div>
             <div>

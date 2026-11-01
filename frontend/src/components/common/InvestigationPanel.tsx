@@ -1,5 +1,7 @@
 import { lazy, Suspense, useState } from 'react';
 import { executeInvestigationAction, getScanById, type ScanDetail } from '../../api/client';
+import {RecruitmentReview} from './RecruitmentReview';
+import {assessmentLabel,researchLabel} from './assessmentSemantics';
 const TrustGraph = lazy(() => import('./TrustGraph'));
 
 export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpdate: (scan: ScanDetail) => void }) {
@@ -21,12 +23,13 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
       <div className="flex flex-wrap justify-between gap-3"><h2 className="font-bold text-xl">Evidence Fusion</h2>
         <span className="text-xs font-mono text-cyan-300">{fusion.assessment_mode} · {state.status} · revision {state.revision}</span></div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[['Risk classification', fusion.risk_level.replaceAll('_', ' ')],
-          ['Risk score (higher = more concern)', fusion.risk_score === null ? 'Unavailable' : `${fusion.risk_score}/100`],
+        {[['Risk classification', assessmentLabel(state.assessment?.state||fusion.risk_level)],
+          ['Risk score (higher = more concern)', fusion.risk_score === null ? 'Undetermined' : `${fusion.risk_score}/100`],
           ['Evidence confidence', `${fusion.confidence}/100`], ['Investigation coverage', `${fusion.evidence_coverage}%`]].map(([label, value]) =>
           <div className="rounded-xl bg-slate-950/70 p-4" key={label}><p className="text-xs text-slate-400">{label}</p><p className="text-lg font-bold mt-2">{value}</p></div>)}
       </div>
-      <p className="text-sm text-amber-200">Heuristic risk and confidence are decision-support indices, not validated probabilities. The legacy Trust Score below is retained for compatibility.</p>
+      <p className="text-sm text-amber-200">Heuristic risk and confidence are decision-support indices, not validated probabilities. Risk and independent verification are separate. Specific offer authenticity is unresolved.</p>
+      {!!state.assessment?.verified_claims.length&&<div className="text-xs text-cyan-200">Independently verified claim (limited scope): {state.assessment.verified_claims.map(c=><p key={c.evidence_id}>{c.scope} · claim {c.claim_id} · evidence {c.evidence_id}</p>)}<p>These scoped claims do not authenticate the overall offer.</p></div>}
       {fusion.explanation.map((line, i) => <p key={i} className="text-xs text-slate-400">{line}</p>)}
       <details><summary className="text-cyan-300 cursor-pointer text-sm">Calculation and unknowns</summary>
         <p className="text-xs mt-3">Configured prior assumption: {fusion.prior}. Correlated observations contribute once.</p>
@@ -38,12 +41,13 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
         <ul className="list-disc pl-5 mt-4 text-xs text-amber-200 space-y-2">{fusion.unknowns.map((u, i) => <li key={i}>{u}</li>)}</ul>
       </details>
     </section>
+    <RecruitmentReview claims={state.claims||[]} evidence={state.evidence} review={state.notice_review}/>
     {!!state.monetary_entities?.length && <section className="glass-card rounded-2xl p-6 space-y-3" aria-label="Monetary entities">
       <h2 className="font-bold text-lg">Amounts in the submission</h2>
       {state.monetary_entities.map((amount,i) => <div key={i} className="text-sm border-t border-slate-700 pt-2">
         <strong>{amount.raw}{amount.period?`/${amount.period}`:''}</strong> · {amount.role.replaceAll('_',' ')} · {amount.category.replaceAll('_',' ')}
-        <p className="text-xs text-slate-400">Source characters {amount.start}–{amount.end}. {amount.ambiguity_reason || 'Linked within the displayed source clause.'}</p>
-        <details className="text-xs mt-1"><summary className="cursor-pointer text-cyan-300">Source context</summary>{amount.context}</details>
+        <p className="text-xs text-slate-400">{amount.page?`Page ${amount.page} · `:''}characters {amount.start}–{amount.end}. {amount.classification_rationale||amount.ambiguity_reason||'Linked within the source clause.'}</p>
+        <details className="text-xs mt-1"><summary className="cursor-pointer text-cyan-300">Source context</summary>{amount.supporting_text||amount.context}</details>
       </div>)}
     </section>}
     <section className="glass-card rounded-2xl p-6 space-y-3">
@@ -62,7 +66,7 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
         <span key={e.id} className="px-3 py-2 rounded-lg bg-slate-900 text-xs break-all">Submitted {e.type}: {e.value}</span>)}</div>
       <p className="text-xs text-amber-200">Sender and specific offer authorization remain unverified. A company website or search mention does not authenticate this offer.</p>
       {state.research.map((r, i) => <div key={i} className="border-t border-slate-700 pt-3 space-y-3">
-        <p className="text-sm text-cyan-300">Tavily: {r.status.replaceAll('_', ' ')}</p><p className="text-xs text-slate-400">{r.reason}</p>
+        <p className="text-sm text-cyan-300">Tavily: {researchLabel(r.status)}</p><p className="text-xs text-slate-400">{r.reason}</p>
         {r.query && <p className="text-xs">Query: {r.query}</p>}
         {r.sources.map(s => <details key={s.id} className="bg-slate-900 p-3 rounded-lg text-xs">
           <summary className="cursor-pointer">{s.title} · {s.source_type.replaceAll('_', ' ')}</summary>
@@ -75,7 +79,7 @@ export function InvestigationPanel({ scan, onUpdate }: { scan: ScanDetail; onUpd
       <p className="text-xs text-slate-400">Pan, zoom and select an entity to inspect its provenance. Red borders highlight recorded identity inconsistencies.</p>
       <Suspense fallback={<p>Loading graph…</p>}><TrustGraph graph={state.graph} /></Suspense>
     </section>
-    <section className="glass-card rounded-2xl p-6 space-y-4">
+    <section id="next-investigation" className="glass-card rounded-2xl p-6 space-y-4">
       <h2 className="font-bold text-lg">Next Best Investigation</h2>
       <p className="text-xs text-slate-400">Transparent rule ranking considers unresolved identity, financial harm, source availability and execution cost. Search budget used: {state.research_calls}/3.</p>
       {error && <p role="alert" className="text-rose-300">{error}</p>}

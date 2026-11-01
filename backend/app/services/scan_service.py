@@ -158,7 +158,7 @@ async def execute_full_scan(
         if org_verification["mismatch"]:
             evidence_list.append({
                 "category": "organization_verification",
-                "severity": "critical",
+                "severity": "moderate",
                 "evidence": f"Claimed organization: '{claimed_org}' does not match analyzed domain '{primary_domain}'.",
                 "source": "Bundled organization domain reference",
                 "confidence": 0.98,
@@ -174,7 +174,7 @@ async def execute_full_scan(
             evidence_list.append({
                 "category": "organization_verification",
                 "severity": "verified",
-                "evidence": f"Domain '{primary_domain}' verified as official infrastructure for {claimed_org}.",
+                "evidence": f"Submitted domain '{primary_domain}' matches the bundled reference for {claimed_org}; offer authorization remains unresolved.",
                 "source": "Bundled organization domain reference",
                 "confidence": 0.99,
                 "explanation": org_verification["explanation"]
@@ -241,6 +241,7 @@ async def execute_full_scan(
     if text_scam_analysis["total_indicators"] > 0:
         log_timeline("Scam Language Detection", "warning", f"Detected {text_scam_analysis['total_indicators']} linguistic risk markers.")
         for flag in text_scam_analysis["flags"]:
+            if flag["category"] in {"payment_pressure","credential_harvesting"}:continue
             evidence_list.append({
                 "category": f"scam_language_{flag['category']}",
                 "severity": flag["severity"],
@@ -248,13 +249,14 @@ async def execute_full_scan(
                 "source": "Scam Language NLP Engine",
                 "confidence": 0.90,
                 "explanation": flag["explanation"],
-                "observed_value": flag["snippet"]
+                "observed_value": flag["snippet"],
+                "source_spans": flag.get("source_spans", [])
             })
 
     # 10. Payment Risk Analysis
     payment_risk = analyze_payment_risk(content)
     if payment_risk["payment_detected"]:
-        log_timeline("Payment Risk Engine", "critical", "Upfront payment demand or fee detected.")
+        log_timeline("Payment Context Review", "critical" if payment_risk["elevated_payment_concern"] else "warning", "Payment policy/recipient/channel inspected. Unverified application fees remain unresolved.")
         for flag in payment_risk["flags"]:
             evidence_list.append({
                 "category": "payment_risk",
@@ -263,6 +265,7 @@ async def execute_full_scan(
                 "source": "Payment Risk Engine",
                 "observed_value": flag["observed_value"],
                 "source_spans": flag["source_spans"],
+                "fact_key":flag.get('fact_key'),"occurrences":flag.get('occurrences',1),"payment_context":flag.get('payment_context'),
                 "confidence": 0.97,
                 "explanation": flag["detail"]
             })
@@ -284,6 +287,9 @@ async def execute_full_scan(
                 "severity": flag["severity"],
                 "evidence": flag["message"],
                 "source": "Sensitive Data Inspector",
+                "observed_value": flag.get("observed_value", ""),
+                "source_spans": flag.get("source_spans", []),
+                "fact_key":flag.get("fact_key"),
                 "confidence": 0.94,
                 "explanation": flag["detail"]
             })
@@ -365,9 +371,11 @@ async def execute_full_scan(
             ev.update(verification_status="UNAVAILABLE")
 
     # 15. Compute Final Trust Score & Risk Level
+    from app.services.evidence_service import group_evidence
+    evidence_list=group_evidence(evidence_list)
     trust_score, risk_level, breakdown = calculate_trust_and_risk(evidence_list)
     confidence_score = calculate_analysis_confidence(evidence_list, len(timeline), len(content))
-    log_timeline("Risk Assessment Finalized", "passed" if risk_level == "LOW RISK" else "critical", f"Trust Score: {trust_score}/100 ({risk_level}). Confidence: {confidence_score}%.")
+    log_timeline("Content Assessment Completed", "info", "Content rules completed. Independent opportunity authorization remains unresolved; see Evidence Fusion.")
 
     # Checklist execution states are independent of risk severity and coverage.
     from app.services.verification_service import build_verification_checklist
@@ -383,8 +391,10 @@ async def execute_full_scan(
 
     # 17. Context-Aware Safety Recommendations
     recommendations = []
-    if payment_risk["payment_detected"]:
-        recommendations.append("Do not pay the requested registration fee or security deposit. Legitimate employers and internships do not charge fees to candidates.")
+    if payment_risk["elevated_payment_concern"]:
+        recommendations.append("Do not pay the requested registration fee or security deposit. Confirm the exact recruitment notice, applicant category, fee and payment destination through independently found official information.")
+    elif payment_risk['payment_detected']:
+        recommendations.append('Application/payment policy remains unverified. Match this exact advertisement, fee/exemption and payment destination on an independently sourced official notice before paying.')
     if sensitive_data["has_critical"]:
         recommendations.append("NEVER share OTP, UPI PIN, ATM PIN, passwords, or CVV. Legitimate organizations never request authentication codes.")
     if sensitive_data["has_medium"]:
@@ -392,7 +402,7 @@ async def execute_full_scan(
     if org_verification and org_verification["mismatch"]:
         recommendations.append(f"Visit {org_verification['canonical_name']}'s official careers portal ({org_verification.get('official_careers_url', 'official website')}) directly to verify if this opportunity exists.")
     if email_analysis["is_free_webmail"]:
-        recommendations.append("Verify recruiter identity through official corporate channels. Free personal email accounts (Gmail, Yahoo) are not used for official corporate hiring.")
+        recommendations.append("Verify recruiter identity through official corporate channels. A personal email account alone does not establish fraud or authenticity.")
     if primary_domain and domain_analysis and (domain_analysis["age_days"] is not None and domain_analysis["age_days"] < 30):
         recommendations.append("The domain was registered recently. Avoid entering personal credentials or downloading files from this domain.")
         
@@ -406,6 +416,7 @@ async def execute_full_scan(
 
     result = {
         "status": "COMPLETED",
+        "input_type": input_type,
         "trust_score": trust_score,
         "risk_level": risk_level,
         "analysis_confidence": confidence_score,

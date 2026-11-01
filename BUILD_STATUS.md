@@ -1,3 +1,44 @@
+# Current context-aware recruitment validation — 1 November 2026
+
+**297 backend tests passed, 0 failed, 0 skipped**, with the exact original BEL PDF
+regression enabled. **12 frontend logic tests passed**; TypeScript/Vite production
+build passed (3,092 modules). The inherited TestClient deprecation and bundle-size
+warning remain. The existing 45-example synthetic benchmark still passes; its results
+are development regressions, not real-world accuracy.
+
+The original PDF failure was reproduced at risk index 95/nine critical findings.
+The updated real PDF API and browser show Undetermined/zero critical findings, one
+grouped unresolved application-fee observation and one cited moderate EWS fee-scope
+inconsistency. Contract liability and normal account instructions are distinguished.
+PDF report export passed content checks. No exact advertisement authenticity claim
+was established; independent retrieval success/failure was tested with mock transports.
+
+No model, dependency or database migration was added. Existing project, .env and user
+databases were preserved. See CONTEXT_AWARE_VERIFICATION_REPORT.md for exact files,
+commands, benchmark limits, provenance and remaining failure modes. Earlier validation
+records below are historical.
+
+---
+
+# Current accuracy/integrity validation — 1 November 2026
+
+**241 backend tests passed, 0 failed, 0 skipped. Nine frontend logic tests passed.**
+TypeScript/Vite production build passed (3,090 modules). One existing upstream
+TestClient deprecation and the inherited bundle-size warning remain. Native AEXON
+TECH screenshot OCR/review/provenance passed. Browser verified all three Evidence
+Challenge scenarios, preserved case/single-scan views and actual saved-scan comparison.
+
+The offline synthetic benchmark passed 45/45: concern precision/recall 100%, FPR 0%,
+abstention 29/45 (64.44%); focused extraction precision/recall 100% over 46 annotated
+claim instances. These are development-set regression results, not real-world
+accuracy, independent holdout performance or calibrated probabilities.
+
+No LLM/model or new dependency is required; no schema migration was added. See
+ACCURACY_INTEGRITY_REPORT.md for audit traces, exact files, compatibility changes,
+run commands and known failure modes. Earlier validations below are historical.
+
+---
+
 # Current multi-source workspace validation
 
 Updated in place on 1 November 2026. **187 backend cases passed, 0 failed**, with

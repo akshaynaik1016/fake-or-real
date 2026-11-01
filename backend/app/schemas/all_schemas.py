@@ -50,6 +50,19 @@ class EvidenceItem(BaseModel):
     correlation_group: Optional[str] = None
     related_entities: List[str] = Field(default_factory=list)
     source_spans: List[Dict[str, Any]] = Field(default_factory=list)
+    source_id: Optional[str] = None
+    original_excerpt: Optional[str] = None
+    extracted_value: Any = None
+    extraction_method: str = 'deterministic_rule'
+    claim_type: Optional[str] = None
+    provenance_kind: str = 'RULE_OUTPUT'
+    verified_claim_id: Optional[str] = None
+    verification_scope: Optional[str] = None
+    fact_key: str | None = None
+    occurrences: int = 1
+    payment_context: dict | None = None
+    citations: list[dict] = Field(default_factory=list)
+    source_ids: list[str] = Field(default_factory=list)
 
 class RiskIndicatorItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -77,12 +90,13 @@ class ScanResponse(BaseModel):
     input_type: str
     target_identifier: Optional[str] = None
     status: str
-    trust_score: int
+    trust_score: int | None
     risk_level: str
     analysis_confidence: int
     summary: Optional[str] = None
     created_at: datetime
     is_demo: bool = False
+    assessment: Optional[Dict[str, Any]] = None
 
 class TimelineEvent(BaseModel):
     timestamp_str: str
@@ -108,7 +122,7 @@ class TrustPassportResponse(BaseModel):
     opportunity_name: str
     organization: Optional[str]
     website: Optional[str]
-    trust_score: int
+    trust_score: int | None
     risk_level: str
     analysis_confidence: int
     verification_checks_passed: int
@@ -117,6 +131,7 @@ class TrustPassportResponse(BaseModel):
     qr_code_url: str
     last_analyzed: datetime
     verification_summary: str
+    assessment: Optional[Dict[str, Any]] = None
 
 class SavedReportResponse(BaseModel):
     id: str

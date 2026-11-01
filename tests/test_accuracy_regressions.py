@@ -121,7 +121,7 @@ def test_checklist_all_execution_states_and_summary():
     assert summary['text']=='1 failed · 8 unresolved · 0 verified'
     assert summary['unavailable']==3 and summary['not_performed']==3
     assert verification_summary([])['failed']==0
-    assert verification_summary([{'status':'passed'}])['verified']==1
+    assert verification_summary([{'status':'passed'}])['completed']==1
 
 
 def test_unavailable_checks_are_not_failures_in_real_scan():
@@ -132,7 +132,7 @@ def test_unavailable_checks_are_not_failures_in_real_scan():
     assert checks['Threat Intelligence']['status']=='unavailable'
     assert checks['Document']['status']=='not_performed'
     assert checks['Phone']['status']=='not_performed'
-    assert checks['Payment']['status']=='verified'
+    assert checks['Payment']['status']=='completed'
 
 
 def test_graph_relationship_states_and_unique_source_edges():
@@ -146,7 +146,7 @@ def test_graph_relationship_states_and_unique_source_edges():
     assert len([e for e in graph['edges'] if e['target']=='src'])==1
     assert {e['relationship_status'] for e in graph['edges']} >= {'CLAIMED','OBSERVED','CONTRADICTED','UNRESOLVED'}
     ev.update(id='match',severity='verified',verification_status='REFERENCE_MATCH')
-    assert any(e['relationship_status']=='VERIFIED' for e in build_trust_graph(entities,[ev],[])['edges'])
+    assert not any(e['relationship_status']=='VERIFIED' for e in build_trust_graph(entities,[ev],[])['edges'])
     assert graph==build_trust_graph(entities,[{**ev,'id':'ref','severity':'high','verification_status':'REFERENCE_MISMATCH'}],[{'sources':[source]},{'sources':[source]}])
 
 

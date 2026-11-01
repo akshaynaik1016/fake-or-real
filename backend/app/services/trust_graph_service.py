@@ -29,12 +29,12 @@ def build_trust_graph(entities: list[dict], evidence: list[dict], research: list
                 reference=ev['verification_status'] in {'REFERENCE_MATCH','BUNDLED_REFERENCE_COMPARISON'} and ev['severity']=='verified'
                 mismatch=ev['verification_status']=='REFERENCE_MISMATCH' or (
                     ev['category']=='organization_verification' and ev['severity']=='critical' and ev['origin']!='SYNTHETIC')
-                state='VERIFIED' if reference else 'CONTRADICTED' if mismatch else status
+                state='OBSERVED' if reference else 'CONTRADICTED' if mismatch else status
                 edge(ev['id'],related,'concerns',state,[ev['id']],ev['verification_status'])
     for result in research:
         for source in result.get('sources',[]):
             graph.add_node(source['id'],type='source',label=source['title'],provenance=source['url'],source=deepcopy(source))
             edge('submission',source['id'],'search_result_for_claim','UNRESOLVED',verification_status=source['verification_status'])
     return {'nodes':[{'id':n,**attrs} for n,attrs in graph.nodes(data=True)],
-        'edges':[{'source':a,'target':b,**attrs} for a,b,attrs in graph.edges(data=True)],
-        'disclaimer':'Observed means present in submitted or collected data. Claimed affiliations are unverified. Verified/contradicted reference comparisons do not authenticate a sender or offer. Synthetic and unverified source relationships remain unresolved.'}
+        'verification_scope':'INDEPENDENT_ONLY','edges':[{'source':a,'target':b,**attrs} for a,b,attrs in graph.edges(data=True)],
+        'disclaimer':'Observed means present in submitted or collected data. Claimed affiliations are unverified. Reference comparisons are observed, not independent verification of a sender or offer. Synthetic and unverified source relationships remain unresolved.'}

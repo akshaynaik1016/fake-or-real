@@ -3,6 +3,13 @@ from typing import Dict, Any, List, Optional
 
 # Verified corporate organizations and government/institutional entities
 VERIFIED_ORGANIZATIONS_REGISTRY: Dict[str, Dict[str, Any]] = {
+    "bel": {
+        "canonical_name":"Bharat Electronics Limited","official_domains":["bel-india.in"],
+        "official_careers_url":"https://bel-india.in/job-notifications/","primary_country":"India",
+        "corporate_identifier":None,"aliases":["bharat electronics limited","bharat electronics ltd","bharat electronics"],
+        "reference_url":"https://www.indiascienceandtechnology.gov.in/allstinstitutions/bharat-electronics-limited-bel",
+        "reference_scope":"Organization website reference only; no recruitment advertisement or payment authorization verified."
+    },
     "microsoft": {
         "canonical_name": "Microsoft Corporation",
         "official_domains": ["microsoft.com", "careers.microsoft.com", "linkedin.com/company/microsoft"],
@@ -69,16 +76,43 @@ VERIFIED_ORGANIZATIONS_REGISTRY: Dict[str, Dict[str, Any]] = {
     }
 }
 
+def organization_mentions(text: str) -> list[dict]:
+    """Extract claimed names, separate from the small bundled reference registry.
+
+    Unknown names need an explicit organization label or a distinctive business
+    heading. No filename, email-domain-to-company guess or OCR character repair.
+    """
+    candidates=[]
+    def add(start,end,method):
+        raw=text[start:end];value=re.sub(r'\s+',' ',raw).strip()
+        if len(value)<2:return
+        ref=next((o for o in VERIFIED_ORGANIZATIONS_REGISTRY.values() if value.casefold() in
+                  [o['canonical_name'].casefold(),*[a.casefold() for a in o['aliases']]]),None)
+        candidates.append({'canonical_name':ref['canonical_name'] if ref else value,
+            'start':start,'end':end,'excerpt':raw,'extraction_method':method,
+            'verification_status':'CLAIMED','reference':ref})
+    for m in re.finditer(r'(?im)^\s*(?:organization|organisation|company|employer|organized by|organisation name|company name)\s*:\s*([^\n.;]{2,150})',text):
+        add(m.start(1),m.end(1),'explicit_organization_label')
+    # Business suffix and a short standalone heading reduce slogan false positives.
+    for m in re.finditer(r'(?m)^[ \t]*([A-Z][A-Z0-9&.-]*(?:[ \t]+[A-Z][A-Z0-9&.-]*){0,4}[ \t]+(?:TECH|TECHNOLOGIES|SOLUTIONS|SYSTEMS|LABS|FOUNDATION|PVT[.]? LTD[.]?|LIMITED|INC[.]?))[ \t]*$',text):
+        if not re.search(r'\b(?:JOIN|APPLY|HIRING|INTERNSHIP|PROGRAM|WELCOME|OUR|YOUR)\b',m.group(1)):
+            add(m.start(1),m.end(1),'business_heading')
+    for org in VERIFIED_ORGANIZATIONS_REGISTRY.values():
+        matches=[m for alias in org['aliases'] for m in re.finditer(r'\b'+re.escape(alias)+r'\b',text,re.I)]
+        if matches:
+            m=min(matches,key=lambda x:x.start())
+            # Explicit company labels take precedence over unrelated brand mentions.
+            if not candidates:add(m.start(),m.end(),'bundled_name_reference')
+    unique={}
+    for c in candidates:unique.setdefault((c['start'],c['end']),c)
+    return sorted(unique.values(),key=lambda c:c['start'])
+
+
 def identify_claimed_organization(text: str) -> Optional[Dict[str, Any]]:
-    """Scans text to identify any claimed prominent corporate or institutional organization"""
-    text_lower = text.lower()
-    for key, org_data in VERIFIED_ORGANIZATIONS_REGISTRY.items():
-        for alias in org_data["aliases"]:
-            # Word boundary regex match
-            pattern = rf"\b{re.escape(alias)}\b"
-            if re.search(pattern, text_lower):
-                return org_data
-    return None
+    mentions=organization_mentions(text)
+    if not mentions:return None
+    first=mentions[0]
+    return {**(first['reference'] or {}),**first}
 
 def verify_organization_domain_match(claimed_org_name: str, domain_name: str) -> Dict[str, Any]:
     """
@@ -93,7 +127,7 @@ def verify_organization_domain_match(claimed_org_name: str, domain_name: str) ->
     # Resolve organization record
     claimed_lower = claimed_org_name.lower().strip()
     for key, data in VERIFIED_ORGANIZATIONS_REGISTRY.items():
-        if key in claimed_lower or any(a in claimed_lower for a in data["aliases"]):
+        if claimed_lower in [key,data['canonical_name'].casefold(),*[a.casefold() for a in data['aliases']]]:
             org_key = key
             org_data = data
             break
@@ -108,7 +142,7 @@ def verify_organization_domain_match(claimed_org_name: str, domain_name: str) ->
             "official_domains": [],
             "corporate_identifier": None,
             "mismatch": False,
-            "explanation": f"'{claimed_org_name}' is not currently indexed in the high-assurance corporate registry. Independent manual verification of domain ownership is recommended.",
+            "explanation": f"'{claimed_org_name}' is not currently indexed in the bundled organization reference list. Independent manual verification of domain ownership is recommended.",
             "severity": "moderate"
         }
         

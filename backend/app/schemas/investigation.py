@@ -19,6 +19,19 @@ class Evidence(BaseModel):
     correlation_group: str
     related_entities: list[str] = Field(default_factory=list)
     source_spans: list[dict] = Field(default_factory=list)
+    source_id: str | None = None
+    original_excerpt: str | None = None
+    extracted_value: object = None
+    extraction_method: str = 'deterministic_rule'
+    claim_type: str | None = None
+    provenance_kind: str = 'RULE_OUTPUT'
+    verified_claim_id: str | None = None
+    verification_scope: str | None = None
+    fact_key: str | None = None
+    occurrences: int = 1
+    payment_context: dict | None = None
+    citations: list[dict] = Field(default_factory=list)
+    source_ids: list[str] = Field(default_factory=list)
 
 
 class ResearchSource(BaseModel):
